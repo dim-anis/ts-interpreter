@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "es2022"
+    ],
+    "module": "Node16",
+    "target": "es2022",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+
+    "allowJs": false,
+      "allowSyntheticDefaultImports": true,
+      "allowUnreachableCode": false,
+      "allowUnusedLabels": false,
+      "declaration": true,
+      "emitDeclarationOnly": true,
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "noFallthroughCasesInSwitch": true,
+      "noImplicitAny": true,
+      "noImplicitReturns": true,
+      "noImplicitThis": true,
+      "removeComments": false,
+      "resolveJsonModule": true,
+      "skipDefaultLibCheck": true,
+      "sourceMap": true,
+      "strictFunctionTypes": true,
+      "strictNullChecks": true,
+      "stripInternal": true,
+      "suppressImplicitAnyIndexErrors": true,
+      "baseUrl": "."
+  }
+}

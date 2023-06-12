@@ -1,4 +1,4 @@
-import { Token, TokenType, KEYWORDS, createNewToken } from "src/token/token";
+import { Token, TokenType, KEYWORDS, createNewToken } from "../token/token";
 
 const _0 = "0".charCodeAt(0);
 const _9 = "9".charCodeAt(0);
@@ -38,7 +38,7 @@ export class Lexer {
 
   private readChar(): void {
     if (this.readPosition >= this.input.length) {
-      this.ch = '/0';
+      this.ch = '\0';
     } else {
       this.ch = this.input[this.readPosition];
     }
@@ -48,7 +48,7 @@ export class Lexer {
 
   private peekChar(): string {
     if (this.readPosition >= this.input.length) {
-      return '/0';
+      return '\0';
     } else {
       return this.input[this.readPosition];
     }
@@ -145,6 +145,7 @@ export class Lexer {
             return keyword;
           } else {
             tok = createNewToken(TokenType.IDENT, literal);
+            return tok;
           }
         } else if (isNumber(this.ch)) {
           tok = createNewToken(TokenType.INT, this.readNumber());

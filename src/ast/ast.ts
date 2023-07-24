@@ -1,43 +1,54 @@
 import { Token } from "../token/token";
 
-export type Node = {
-  tokenLiteral(): string;
+export class Node {
+  token: Token;
+
+  constructor(token: Token) {
+    this.token = token;
+  }
+  tokenLiteral(): string {
+    return this.token.literal;
+  };
 }
 
-export type Statement = {
-  statementNode(): string
-} & Node;
+export class Statement extends Node {
+  statementNode(): void {
+    console.log('Am empty method')
+  };
+};
 
-
-export type Expression = {
-  expressionNode(): string
-} & Node;
-
-
-export class Program {
-  statements: Statement[];
-
-  constructor() {
-    this.statements = [];
+export class Expression extends Node {
+  expressionNode(): void {
+    console.log('Am empty method');
   }
+};
+
+// AST root
+export class Program {
+  statements!: (Statement | LetStatement)[];
 
   tokenLiteral(): string {
     if (this.statements.length > 0) {
       return this.statements[0].tokenLiteral()
     } else {
-      return '';
+      return "";
     }
   }
 }
 
-export class LetStatement {
-  token!: Token;
+export class LetStatement extends Statement {
+  token: Token;
   name!: Identifier;
   value!: Expression;
 
-  constructor() { }
+  constructor(token: Token) {
+    super(token);
+    this.token = token;
+  }
 
-  statementNode() { }
+  statementNode(): void {
+    console.log('Am a dummy method')
+  };
 
   tokenLiteral(): string {
     return this.token.literal;
@@ -45,12 +56,17 @@ export class LetStatement {
 }
 
 export class Identifier {
-  token!: Token;
-  value!: string;
+  token: Token;
+  value: string;
 
-  constructor() { }
+  constructor(token: Token, value: string) {
+    this.token = token;
+    this.value = value;
+  }
 
-  expressionNode() { };
+  expressionNode(): void {
+    console.log('Am a dummy method')
+  };
 
   tokenLiteral(): string {
     return this.token.literal;

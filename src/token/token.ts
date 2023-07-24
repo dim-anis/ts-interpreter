@@ -35,7 +35,7 @@ export const TokenType = {
   NOT_EQ: "!=",
 } as const;
 
-type TokenItem = typeof TokenType[keyof typeof TokenType];
+export type TokenItem = typeof TokenType[keyof typeof TokenType];
 
 export const KEYWORDS = {
   'fn': createNewToken(TokenType.FUNCTION, 'fn'),

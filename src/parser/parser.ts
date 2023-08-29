@@ -1,16 +1,30 @@
 import { Lexer } from "../lexer/lexer";
 import { Token, TokenItem, TokenType } from "../token/token";
-import { Identifier, LetStatement, Program, Statement } from "../ast/ast";
+import { Expression, Identifier, LetStatement, Program, ReturnStatement, Statement } from "../ast/ast";
+
+type PrefixParseFn = () => Expression;
+type InfixParseFn = (expr: Expression) => Expression;
 
 export class Parser {
   private curToken!: Token;
   private peekToken!: Token;
   errors: string[];
 
+  prefixParseFns!: Record<TokenItem, PrefixParseFn>;
+  infixParseFns!: Record<TokenItem, InfixParseFn>;
+
   constructor(private l: Lexer) {
     this.nextToken();
     this.nextToken();
     this.errors = [];
+  }
+
+  registerPrefix(tokenType: TokenItem, fn: PrefixParseFn) {
+    this.prefixParseFns[tokenType] = fn;
+  }
+
+  registerInfix(tokenType: TokenItem, fn: InfixParseFn) {
+    this.infixParseFns[tokenType] = fn;
   }
 
   Errors(): string[] {
@@ -35,8 +49,7 @@ export class Parser {
       this.nextToken();
       return true;
     }
-    
-    // add error when next expected token is wrong
+
     this.peekError(t);
     return false;
   }
@@ -66,6 +79,8 @@ export class Parser {
     switch (this.curToken.type) {
       case TokenType.LET:
         return this.parseLetStatement();
+      case TokenType.RETURN:
+        return this.parseReturnStatement();
       default:
         return null;
     }
@@ -85,6 +100,18 @@ export class Parser {
     }
 
     while (!this.curTokenIs(TokenType.SEMICOLON) && !this.curTokenIs(TokenType.EOF)) {
+      this.nextToken();
+    }
+
+    return stmt;
+  }
+
+  parseReturnStatement(): ReturnStatement | null {
+    const stmt = new ReturnStatement(this.curToken);
+
+    this.nextToken();
+
+    while (!this.curTokenIs(TokenType.SEMICOLON)) {
       this.nextToken();
     }
 

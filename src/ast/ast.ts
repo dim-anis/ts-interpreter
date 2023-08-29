@@ -8,50 +8,67 @@ export class Node {
   }
   tokenLiteral(): string {
     return this.token.literal;
-  };
+  }
+  string(): string {
+    return 'Node\'s string()'
+  }
 }
 
 export class Statement extends Node {
   statementNode(): void {
-    console.log('Am empty method')
-  };
-};
+    console.log('Am empty method');
+  }
+}
 
 export class Expression extends Node {
   expressionNode(): void {
     console.log('Am empty method');
   }
-};
+}
 
 // AST root
 export class Program {
-  statements!: (Statement | LetStatement)[];
+  statements!: Statement[];
 
   tokenLiteral(): string {
     if (this.statements.length > 0) {
       return this.statements[0].tokenLiteral()
     } else {
-      return "";
+      return '';
     }
+  }
+
+  string(): string {
+    const out: string[] = [];
+    this.statements.forEach((stmt) => out.push(stmt.string()));
+    return out.join(',');
   }
 }
 
 export class LetStatement extends Statement {
-  token: Token;
   name!: Identifier;
   value!: Expression;
 
-  constructor(token: Token) {
-    super(token);
-    this.token = token;
+  string(): string {
+    return `${this.tokenLiteral()} ${this.name.string()} = ${this.value.string() ? this.value.string() : ''};`;
   }
+}
 
-  statementNode(): void {
-    console.log('Am a dummy method')
-  };
+export class ReturnStatement extends Statement {
+  string(): string {
+    return `${this.tokenLiteral()} ${this.returnValue ? this.returnValue : ''};`;
+  }
+}
 
-  tokenLiteral(): string {
-    return this.token.literal;
+export class ExpressionStatement extends Statement {
+  expression!: Expression;
+
+  string(): string {
+    if (this.expression !== null) {
+      return this.expression.string();
+    }
+
+    return '';
   }
 }
 
@@ -70,5 +87,9 @@ export class Identifier {
 
   tokenLiteral(): string {
     return this.token.literal;
+  }
+
+  string(): string {
+    return this.value;
   }
 }

@@ -1,13 +1,13 @@
 import { Parser } from "./parser";
 import { Lexer } from "../lexer/lexer";
-import { LetStatement, Statement } from "../ast/ast";
+import { LetStatement, ReturnStatement, Statement } from "../ast/ast";
 
-test('Test Let Statements', function() {
-//   const input = `
-// let x = 5;
-// let y = 10;
-// let = 838383;
-// `
+test('test let statement', function() {
+  //   const input = `
+  // let x = 5;
+  // let y = 10;
+  // let = 838383;
+  // `
   const input = `
 let x 5;
 let = 10;
@@ -45,7 +45,7 @@ function checkParserErrors(p: Parser) {
     return;
   }
 
-  const errMsgs = [`parser has ${errors.length}`];
+  const errMsgs = [`parser has ${errors.length} errors`];
   errors.forEach(err => errMsgs.push(err));
 
   throw new Error(errMsgs.join("\n"));
@@ -75,3 +75,33 @@ function testLetStatement(s: Statement, name: string) {
 
   return true;
 }
+
+test('test return statement', () => {
+  const input = `
+return 5;
+return 10;
+return 993322;
+`
+  const l = new Lexer(input);
+  const p = new Parser(l);
+
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  if (program.statements.length !== 3) {
+    console.log(`program.statements does not contain 3 statements. got=${program.statements.length}`)
+  }
+
+  for (let i = 0; i < program.statements.length; ++i) {
+    const returnStmt = program.statements[i];
+
+    if (!(returnStmt instanceof ReturnStatement)) {
+      console.log(`stmt not ReturnStatement, got=${returnStmt.tokenLiteral()}`)
+      continue;
+    }
+
+    if (returnStmt.tokenLiteral() !== 'return') {
+      console.log(`returnStmt.tokenLiteral not 'return', got ${returnStmt.tokenLiteral}`)
+    }
+  }
+})

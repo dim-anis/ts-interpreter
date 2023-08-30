@@ -1,17 +1,12 @@
 import { Parser } from "./parser";
 import { Lexer } from "../lexer/lexer";
-import { LetStatement, ReturnStatement, Statement } from "../ast/ast";
+import { ExpressionStatement, Identifier, IntegralLiteral, LetStatement, ReturnStatement, Statement } from "../ast/ast";
 
 test('test let statement', function() {
-  //   const input = `
-  // let x = 5;
-  // let y = 10;
-  // let = 838383;
-  // `
   const input = `
-let x 5;
-let = 10;
-let 838383;
+let x = 5;
+let y = 10;
+let foobar = 838383;
 `
 
   const l = new Lexer(input);
@@ -32,6 +27,11 @@ let 838383;
   for (let i = 0; i < expectedIds.length; ++i) {
     const statement = program.statements[i];
 
+    if (!(statement instanceof LetStatement)) {
+      p._errors.push(`not LetStatement. expected LetStatement, got=${statement.token.type}`)
+      throw(`not LetStatement. expected LetStatement, got=${statement.token.type}`);
+    }
+
     expect(testLetStatement(statement, expectedIds[i])).toBe(true);
   }
 
@@ -39,7 +39,7 @@ let 838383;
 });
 
 function checkParserErrors(p: Parser) {
-  const errors = p.errors;
+  const errors = p._errors;
 
   if (errors.length === 0) {
     return;
@@ -103,5 +103,71 @@ return 993322;
     if (returnStmt.tokenLiteral() !== 'return') {
       console.log(`returnStmt.tokenLiteral not 'return', got ${returnStmt.tokenLiteral}`)
     }
+  }
+})
+
+test('test identifier expression', () => {
+  const input = 'foobar;';
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  if (program.statements.length !== 1) {
+    console.log(`program has not enough statements. got=${program.statements.length}`);
+  }
+
+  const stmt = program.statements[0];
+
+  if (!(stmt instanceof ExpressionStatement)) {
+    console.log(`program.statements[0] is not ExpressionStatement. got ${stmt}`);
+  }
+
+  const ident = (stmt as ExpressionStatement).expression;
+
+  if (!(ident instanceof Identifier)) {
+    console.log(`exp not Identifier. got ${stmt.string()}`);
+  }
+
+  if (ident instanceof Identifier && ident.value !== 'foobar') {
+    console.log(`ident.value not 'foobar'. got '${ident.value}'`)
+  }
+
+  if (ident instanceof Identifier && ident.tokenLiteral() !== 'foobar') {
+    console.log(`ident.tokenLiteral not 'foobar'. got '${ident.tokenLiteral()}'`)
+  }
+})
+
+test('test integral literal expression', () => {
+  const input = '5;';
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  if (program.statements.length !== 1) {
+    console.log(`program has not enough statements. got=${program.statements.length}`);
+  }
+
+  const stmt = program.statements[0];
+
+  if (!(stmt instanceof ExpressionStatement)) {
+    console.log(`program.statements[0] is not ExpressionStatement. got ${stmt}`);
+  }
+
+  const literal = (stmt as ExpressionStatement).expression;
+
+  if (!(literal instanceof IntegralLiteral)) {
+    console.log(`exp not IntegralLiteral. got ${stmt.string()}`);
+  }
+
+  if (literal instanceof IntegralLiteral && literal.value !== 5) {
+    console.log(`ident.value not '5'. got '${literal.value}'`)
+  }
+
+  if (literal instanceof IntegralLiteral && literal.tokenLiteral() !== '5') {
+    console.log(`ident.tokenLiteral not '5'. got '${literal.tokenLiteral()}'`)
   }
 })

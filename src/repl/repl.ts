@@ -1,15 +1,20 @@
 import { Lexer } from "../lexer/lexer";
-import { TokenType } from "../token/token";
 import * as readline from "node:readline/promises";
-import {stdin as input, stdout as output} from "node:process";
+import { stdin as input, stdout as output } from "node:process";
 
-const PROMPT = ">> ";
+const rl = readline.createInterface({
+  input,
+  output
+});
+
+rl.setPrompt(">> ");
 
 async function main() {
-  const rl = readline.createInterface({input, output});
-  rl.setPrompt(PROMPT);
-  const userInput = await rl.question("Welcome to TS version of Monkey Interpreter!")
-  const l = new Lexer(userInput);
+  await rl.question("Welcome to TS version of Monkey Interpreter!")
+
+  rl.on('line', async (input) => {
+    const l = new Lexer(input);
+  })
 }
 
 main();

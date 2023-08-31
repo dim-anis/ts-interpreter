@@ -26,6 +26,29 @@ export class Expression extends Node {
   }
 }
 
+export class PrefixExpression {
+  token: Token;
+  operator: string;
+  right!: Expression | null;
+
+  constructor(token: Token) {
+    this.token = token;
+    this.operator = token.literal;
+  }
+
+  expressionNode(): void {
+    console.log('PrefixExpression expressionNode()');
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  string(): string {
+    return `(${this.operator}${this.right?.string()})`;
+  }
+}
+
 export class IntegralLiteral {
   token!: Token;
   value!: number;
@@ -47,7 +70,7 @@ export class IntegralLiteral {
 
 // AST root
 export class Program {
-  statements: (Statement | LetStatement | ReturnStatement | ExpressionStatement | IntegralLiteral)[] = [];
+  statements: (Statement | LetStatement | ReturnStatement | ExpressionStatement | IntegralLiteral | PrefixExpression)[] = [];
 
   tokenLiteral(): string {
     if (this.statements.length > 0) {

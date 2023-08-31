@@ -1,6 +1,6 @@
 import { Lexer } from "../lexer/lexer";
 import { Token, TokenItem, TokenType } from "../token/token";
-import { Expression, ExpressionStatement, Identifier, IntegralLiteral, LetStatement, Program, ReturnStatement, Statement } from "../ast/ast";
+import { Expression, ExpressionStatement, Identifier, IntegralLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement } from "../ast/ast";
 
 enum Precedence {
   LOWEST = 1,
@@ -29,6 +29,8 @@ export class Parser {
     this.prefixParseFns = new Map<TokenItem, PrefixParseFn>();
     this.registerPrefix(TokenType.IDENT, this.parseIdentifier.bind(this));
     this.registerPrefix(TokenType.INT, this.parseIntegralLiteral.bind(this));
+    this.registerPrefix(TokenType.BANG, this.parsePrefixExpression.bind(this));
+    this.registerPrefix(TokenType.MINUS, this.parsePrefixExpression.bind(this));
   }
 
   registerPrefix(tokenType: TokenItem, fn: PrefixParseFn) {
@@ -90,6 +92,7 @@ export class Parser {
   parseExpression(precedence: number): Expression | null {
     const prefix = this.prefixParseFns.get(this._curToken.type);
     if (prefix === undefined) {
+      this.noPrefixParseFnError(this._curToken.type);
       return null;
     }
 
@@ -170,5 +173,20 @@ export class Parser {
     literal.value = value;
 
     return literal;
+  }
+
+  parsePrefixExpression(): Expression | null {
+    const expression = new PrefixExpression(this._curToken);
+
+    this.nextToken();
+
+    expression.right = this.parseExpression(Precedence.PREFIX);
+
+    return expression;
+  }
+
+  noPrefixParseFnError(token: TokenItem) {
+    const msg = `no prefix parse function for ${token} found`;
+    this._errors.push(msg);
   }
 }

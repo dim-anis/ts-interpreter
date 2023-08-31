@@ -1,6 +1,6 @@
 import { Parser } from "./parser";
 import { Lexer } from "../lexer/lexer";
-import { ExpressionStatement, Identifier, IntegralLiteral, LetStatement, ReturnStatement, Statement } from "../ast/ast";
+import { Expression, ExpressionStatement, Identifier, IntegralLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement } from "../ast/ast";
 
 test('test let statement', function() {
   const input = `
@@ -38,43 +38,6 @@ let foobar = 838383;
   expect(checkParserErrors).toThrow();
 });
 
-function checkParserErrors(p: Parser) {
-  const errors = p._errors;
-
-  if (errors.length === 0) {
-    return;
-  }
-
-  const errMsgs = [`parser has ${errors.length} errors`];
-  errors.forEach(err => errMsgs.push(err));
-
-  throw new Error(errMsgs.join("\n"));
-}
-
-function testLetStatement(s: Statement, name: string) {
-  if (s.tokenLiteral() !== 'let') {
-    console.log(`s.tokenLiteral not "let", got ${s.tokenLiteral()}`)
-    return false;
-  }
-
-  const letStmt = s;
-  if (!(letStmt instanceof LetStatement)) {
-    console.log(`s is not of type LetStatement, got ${s.tokenLiteral()}`);
-    return false;
-  }
-
-  if (letStmt.name.value !== name) {
-    console.log(`letStmt.name.value not ${name}, got ${letStmt.name.value}`);
-    return false;
-  }
-
-  if (letStmt.name.tokenLiteral() !== name) {
-    console.log(`letStmt.name.tokenLiteral() is not ${name}, got ${letStmt.name.tokenLiteral()}`)
-    return false;
-  }
-
-  return true;
-}
 
 test('test return statement', () => {
   const input = `
@@ -145,3 +108,82 @@ test('test integral literal expression', () => {
     expect(literal.tokenLiteral()).toBe('5');
   }
 })
+
+test('test parsing prefix expressions', () => {
+  type Expression = {
+    input: string,
+    operator: string,
+    integerValue: number
+  };
+
+  const prefixTests: Expression[] = [
+    {
+      input: '!5;',
+      operator: '!',
+      integerValue: 5
+    },
+    {
+      input: '-15;',
+      operator: '-',
+      integerValue: 15
+    }
+  ];
+
+  for (const test of prefixTests) {
+    const l = new Lexer(test.input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    expect(program.statements.length).toBe(1);
+
+    const stmt = program.statements[0];
+
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+    const exp = (stmt as ExpressionStatement).expression;
+
+    if (exp instanceof PrefixExpression) {
+      expect(exp.operator).toBe(test.operator);
+
+      if (!testIntegralLiteral(exp.right, test.integerValue)) {
+        return;
+      }
+    }
+  }
+})
+
+function checkParserErrors(p: Parser) {
+  const errors = p._errors;
+
+  if (errors.length === 0) {
+    return;
+  }
+
+  const errMsgs = [`parser has ${errors.length} errors`];
+  errors.forEach(err => errMsgs.push(err));
+
+  throw new Error(errMsgs.join("\n"));
+}
+
+function testLetStatement(s: Statement, name: string) {
+  expect(s.tokenLiteral()).toBe('let');
+
+  const letStmt = s as LetStatement;
+  expect(letStmt).toBeInstanceOf(LetStatement);
+
+  expect(letStmt.name.value).toBe(name);
+
+  return true;
+}
+
+function testIntegralLiteral(il: Expression | null, value: number): boolean {
+  const int = il as IntegralLiteral;
+  expect(il).toBeInstanceOf(IntegralLiteral);
+
+  expect(int.value).toBe(value);
+
+  expect(int.tokenLiteral()).toBe(value.toString());
+
+  return true;
+}

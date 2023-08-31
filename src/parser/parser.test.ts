@@ -29,7 +29,7 @@ let foobar = 838383;
 
     if (!(statement instanceof LetStatement)) {
       p._errors.push(`not LetStatement. expected LetStatement, got=${statement.token.type}`)
-      throw(`not LetStatement. expected LetStatement, got=${statement.token.type}`);
+      throw (`not LetStatement. expected LetStatement, got=${statement.token.type}`);
     }
 
     expect(testLetStatement(statement, expectedIds[i])).toBe(true);
@@ -88,21 +88,13 @@ return 993322;
   const program = p.parseProgram();
   checkParserErrors(p);
 
-  if (program.statements.length !== 3) {
-    console.log(`program.statements does not contain 3 statements. got=${program.statements.length}`)
-  }
+  expect(program.statements.length).toBe(3);
 
   for (let i = 0; i < program.statements.length; ++i) {
     const returnStmt = program.statements[i];
 
-    if (!(returnStmt instanceof ReturnStatement)) {
-      console.log(`stmt not ReturnStatement, got=${returnStmt.tokenLiteral()}`)
-      continue;
-    }
-
-    if (returnStmt.tokenLiteral() !== 'return') {
-      console.log(`returnStmt.tokenLiteral not 'return', got ${returnStmt.tokenLiteral}`)
-    }
+    expect(returnStmt).toBeInstanceOf(ReturnStatement);
+    expect(returnStmt.tokenLiteral()).toBe('return');
   }
 })
 
@@ -114,28 +106,19 @@ test('test identifier expression', () => {
   const program = p.parseProgram();
   checkParserErrors(p);
 
-  if (program.statements.length !== 1) {
-    console.log(`program has not enough statements. got=${program.statements.length}`);
-  }
+  expect(program.statements.length).toBe(1);
 
   const stmt = program.statements[0];
 
-  if (!(stmt instanceof ExpressionStatement)) {
-    console.log(`program.statements[0] is not ExpressionStatement. got ${stmt}`);
-  }
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
 
   const ident = (stmt as ExpressionStatement).expression;
 
-  if (!(ident instanceof Identifier)) {
-    console.log(`exp not Identifier. got ${stmt.string()}`);
-  }
+  expect(ident).toBeInstanceOf(Identifier);
 
-  if (ident instanceof Identifier && ident.value !== 'foobar') {
-    console.log(`ident.value not 'foobar'. got '${ident.value}'`)
-  }
-
-  if (ident instanceof Identifier && ident.tokenLiteral() !== 'foobar') {
-    console.log(`ident.tokenLiteral not 'foobar'. got '${ident.tokenLiteral()}'`)
+  if (ident instanceof Identifier) {
+    expect(ident.value).toBe('foobar');
+    expect(ident.tokenLiteral()).toBe('foobar');
   }
 })
 
@@ -147,27 +130,18 @@ test('test integral literal expression', () => {
   const program = p.parseProgram();
   checkParserErrors(p);
 
-  if (program.statements.length !== 1) {
-    console.log(`program has not enough statements. got=${program.statements.length}`);
-  }
+  expect(program.statements.length).toBe(1);
 
   const stmt = program.statements[0];
 
-  if (!(stmt instanceof ExpressionStatement)) {
-    console.log(`program.statements[0] is not ExpressionStatement. got ${stmt}`);
-  }
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
 
   const literal = (stmt as ExpressionStatement).expression;
 
-  if (!(literal instanceof IntegralLiteral)) {
-    console.log(`exp not IntegralLiteral. got ${stmt.string()}`);
-  }
+  expect(literal).toBeInstanceOf(IntegralLiteral);
 
-  if (literal instanceof IntegralLiteral && literal.value !== 5) {
-    console.log(`ident.value not '5'. got '${literal.value}'`)
-  }
-
-  if (literal instanceof IntegralLiteral && literal.tokenLiteral() !== '5') {
-    console.log(`ident.tokenLiteral not '5'. got '${literal.tokenLiteral()}'`)
+  if (literal instanceof IntegralLiteral) {
+    expect(literal.value).toBe(5);
+    expect(literal.tokenLiteral()).toBe('5');
   }
 })

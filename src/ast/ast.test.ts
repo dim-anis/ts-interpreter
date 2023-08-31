@@ -23,7 +23,5 @@ test('test string', () => {
 
   program.statements.push(statement);
 
-  if (program.string() !== 'let myVar = anotherVar;') {
-    console.log(`program.string() wrong. got=${program.string()}`);
-  }
+  expect(program.string()).toEqual('let myVar = anotherVar;');
 });

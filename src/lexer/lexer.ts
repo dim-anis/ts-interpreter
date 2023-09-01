@@ -113,7 +113,7 @@ export class Lexer {
         tok = createNewToken(TokenType.MINUS, this.ch);
         break;
       case '!':
-        if (this.peekChar() === '!') {
+        if (this.peekChar() === '=') {
           const ch = this.ch;
           this.readChar();
           const literal = ch + this.ch;

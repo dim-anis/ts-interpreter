@@ -1,6 +1,6 @@
 import { Parser } from "./parser";
 import { Lexer } from "../lexer/lexer";
-import { Expression, ExpressionStatement, Identifier, IntegralLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement } from "../ast/ast";
+import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegralLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement } from "../ast/ast";
 
 test('test let statement', function() {
   const input = `
@@ -110,13 +110,13 @@ test('test integral literal expression', () => {
 })
 
 test('test parsing prefix expressions', () => {
-  type Expression = {
+  type IPrefixExpression = {
     input: string,
     operator: string,
     integerValue: number
   };
 
-  const prefixTests: Expression[] = [
+  const prefixTests: IPrefixExpression[] = [
     {
       input: '!5;',
       operator: '!',
@@ -143,6 +143,8 @@ test('test parsing prefix expressions', () => {
 
     const exp = (stmt as ExpressionStatement).expression;
 
+    expect(exp).toBeInstanceOf(PrefixExpression);
+
     if (exp instanceof PrefixExpression) {
       expect(exp.operator).toBe(test.operator);
 
@@ -152,6 +154,94 @@ test('test parsing prefix expressions', () => {
     }
   }
 })
+
+test('test parsing infix expressions', () => {
+  type IInfixExpression = {
+    input: string,
+    leftValue: number,
+    operator: string,
+    rightValue: number
+  }
+  const infixTests: IInfixExpression[] = [
+    {
+      input: '5 + 5;',
+      leftValue: 5,
+      operator: '+',
+      rightValue: 5
+    },
+    {
+      input: '5 - 5;',
+      leftValue: 5,
+      operator: '-',
+      rightValue: 5
+    },
+    {
+      input: '5 * 5;',
+      leftValue: 5,
+      operator: '*',
+      rightValue: 5
+    },
+    {
+      input: '5 / 5;',
+      leftValue: 5,
+      operator: '/',
+      rightValue: 5
+    },
+    {
+      input: '5 > 5;',
+      leftValue: 5,
+      operator: '>',
+      rightValue: 5
+    },
+    {
+      input: '5 < 5;',
+      leftValue: 5,
+      operator: '<',
+      rightValue: 5
+    },
+    {
+      input: '5 == 5;',
+      leftValue: 5,
+      operator: '==',
+      rightValue: 5
+    },
+    {
+      input: '5 != 5;',
+      leftValue: 5,
+      operator: '!=',
+      rightValue: 5
+    },
+  ]
+
+  for (const test of infixTests) {
+    const l = new Lexer(test.input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    expect(program.statements.length).toBe(1);
+
+    const stmt = program.statements[0];
+
+    expect(stmt).toBeInstanceOf(Statement || LetStatement || ReturnStatement || ExpressionStatement || IntegralLiteral || PrefixExpression);
+
+    const exp = (stmt as ExpressionStatement).expression;
+
+    expect(exp).toBeInstanceOf(InfixExpression);
+
+    if (exp instanceof InfixExpression) {
+      if (!testIntegralLiteral(exp.left, test.leftValue)) {
+        return;
+      }
+
+      expect(exp.operator).toBe(test.operator);
+
+      if (!testIntegralLiteral(exp.right, test.rightValue)) {
+        return;
+      }
+    }
+  }
+});
 
 function checkParserErrors(p: Parser) {
   const errors = p._errors;

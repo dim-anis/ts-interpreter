@@ -2,14 +2,27 @@ import { Lexer } from "./lexer";
 import { TokenType } from "../token/token";
 
 test("test nextToken()", function() {
-  const input = `let i = 0`;
+  const input = `
+let i = 0;
+x == y;
+x != y;
+`;
 
   const tokens = [
     TokenType.LET,
     TokenType.IDENT,
     TokenType.ASSIGN,
     TokenType.INT,
-    TokenType.EOF
+    TokenType.SEMICOLON,
+    TokenType.IDENT,
+    TokenType.EQ,
+    TokenType.IDENT,
+    TokenType.SEMICOLON,
+    TokenType.IDENT,
+    TokenType.NOT_EQ,
+    TokenType.IDENT,
+    TokenType.SEMICOLON
+    // TokenType.EOF
     // TokenType.ASSIGN,
     // TokenType.PLUS,
     // TokenType.LPAREN,

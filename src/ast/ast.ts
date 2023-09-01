@@ -49,6 +49,30 @@ export class PrefixExpression {
   }
 }
 
+export class InfixExpression {
+  token: Token;
+  left!: Expression | null;
+  operator: string;
+  right!: Expression | null;
+
+  constructor(token: Token) {
+    this.token = token;
+    this.operator = token.literal;
+  }
+
+  expressionNode(): void {
+    console.log('InfixExpression expressionNode()');
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  string(): string {
+    return `(${this.left?.string()} ${this.operator} ${this.right?.string()})`;
+  }
+}
+
 export class IntegralLiteral {
   token!: Token;
   value!: number;

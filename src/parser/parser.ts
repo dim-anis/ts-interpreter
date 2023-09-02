@@ -119,24 +119,24 @@ export class Parser {
   }
 
   parseExpression(precedence: number): Expression | null {
-    const prefix = this.prefixParseFns.get(this._curToken.type);
-    if (prefix === undefined) {
+    const prefixFn = this.prefixParseFns.get(this._curToken.type);
+    if (prefixFn === undefined) {
       this.noPrefixParseFnError(this._curToken.type);
       return null;
     }
 
-    let leftExp = prefix();
+    let leftExp = prefixFn();
 
     while ((!this.peekTokenIs(TokenType.SEMICOLON)) && (precedence < this.peekPrecedence())) {
-      const infix = this.infixParseFns.get(this._peekToken.type);
-      if (infix === undefined) {
+      const infixFn = this.infixParseFns.get(this._peekToken.type);
+      if (infixFn === undefined) {
         return leftExp;
       }
 
       this.nextToken();
 
       if (leftExp) {
-        leftExp = infix(leftExp);
+        leftExp = infixFn(leftExp);
       }
     }
 

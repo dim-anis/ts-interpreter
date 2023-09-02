@@ -1,6 +1,7 @@
 import { Parser } from "./parser";
 import { Lexer } from "../lexer/lexer";
 import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegralLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement } from "../ast/ast";
+import { check } from "prettier";
 
 test('test let statement', function() {
   const input = `
@@ -110,24 +111,22 @@ test('test integral literal expression', () => {
 })
 
 test('test parsing prefix expressions', () => {
-  type IPrefixExpression = {
+  const prefixTests: {
     input: string,
     operator: string,
     integerValue: number
-  };
-
-  const prefixTests: IPrefixExpression[] = [
-    {
-      input: '!5;',
-      operator: '!',
-      integerValue: 5
-    },
-    {
-      input: '-15;',
-      operator: '-',
-      integerValue: 15
-    }
-  ];
+  }[] = [
+      {
+        input: '!5;',
+        operator: '!',
+        integerValue: 5
+      },
+      {
+        input: '-15;',
+        operator: '-',
+        integerValue: 15
+      }
+    ];
 
   for (const test of prefixTests) {
     const l = new Lexer(test.input);
@@ -156,62 +155,61 @@ test('test parsing prefix expressions', () => {
 })
 
 test('test parsing infix expressions', () => {
-  type IInfixExpression = {
+  const infixTests: {
     input: string,
     leftValue: number,
     operator: string,
     rightValue: number
-  }
-  const infixTests: IInfixExpression[] = [
-    {
-      input: '5 + 5;',
-      leftValue: 5,
-      operator: '+',
-      rightValue: 5
-    },
-    {
-      input: '5 - 5;',
-      leftValue: 5,
-      operator: '-',
-      rightValue: 5
-    },
-    {
-      input: '5 * 5;',
-      leftValue: 5,
-      operator: '*',
-      rightValue: 5
-    },
-    {
-      input: '5 / 5;',
-      leftValue: 5,
-      operator: '/',
-      rightValue: 5
-    },
-    {
-      input: '5 > 5;',
-      leftValue: 5,
-      operator: '>',
-      rightValue: 5
-    },
-    {
-      input: '5 < 5;',
-      leftValue: 5,
-      operator: '<',
-      rightValue: 5
-    },
-    {
-      input: '5 == 5;',
-      leftValue: 5,
-      operator: '==',
-      rightValue: 5
-    },
-    {
-      input: '5 != 5;',
-      leftValue: 5,
-      operator: '!=',
-      rightValue: 5
-    },
-  ]
+  }[] = [
+      {
+        input: '5 + 5;',
+        leftValue: 5,
+        operator: '+',
+        rightValue: 5
+      },
+      {
+        input: '5 - 5;',
+        leftValue: 5,
+        operator: '-',
+        rightValue: 5
+      },
+      {
+        input: '5 * 5;',
+        leftValue: 5,
+        operator: '*',
+        rightValue: 5
+      },
+      {
+        input: '5 / 5;',
+        leftValue: 5,
+        operator: '/',
+        rightValue: 5
+      },
+      {
+        input: '5 > 5;',
+        leftValue: 5,
+        operator: '>',
+        rightValue: 5
+      },
+      {
+        input: '5 < 5;',
+        leftValue: 5,
+        operator: '<',
+        rightValue: 5
+      },
+      {
+        input: '5 == 5;',
+        leftValue: 5,
+        operator: '==',
+        rightValue: 5
+      },
+      {
+        input: '5 != 5;',
+        leftValue: 5,
+        operator: '!=',
+        rightValue: 5
+      },
+    ]
 
   for (const test of infixTests) {
     const l = new Lexer(test.input);
@@ -242,6 +240,37 @@ test('test parsing infix expressions', () => {
     }
   }
 });
+
+test('operator precedence parsing', () => {
+  const tests: {
+    input: string,
+    expected: string
+  }[] = [
+      {
+        input: '-a * b',
+        expected: '((-a) * b)'
+      },
+      {
+        input: '!-a',
+        expected: '(!(-a))'
+      },
+      {
+        input: '5 < 4 != 3 > 4',
+        expected: '((5 < 4) != (3 > 4))'
+      }
+    ];
+
+  for (const test of tests) {
+    const l = new Lexer(test.input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+
+    const actual = program.string();
+
+    expect(actual).toBe(test.expected);
+  }
+})
 
 function checkParserErrors(p: Parser) {
   const errors = p._errors;
@@ -274,6 +303,46 @@ function testIntegralLiteral(il: Expression | null, value: number): boolean {
   expect(int.value).toBe(value);
 
   expect(int.tokenLiteral()).toBe(value.toString());
+
+  return true;
+}
+
+function testIdentifier(exp: Expression, value: string): boolean {
+  const ident = exp as Identifier;
+  expect(ident).toBeInstanceOf(Identifier);
+
+  expect(ident.value).toBe(value);
+
+  expect(ident.tokenLiteral()).toBe(value);
+
+  return true;
+}
+
+function testLiteralExpression(exp: Expression, expected: any): boolean {
+  switch (typeof expected) {
+    case 'number':
+      return testIntegralLiteral(exp, expected);
+    case 'string':
+      return testIdentifier(exp, expected);
+    default:
+      console.error(`type of exp not handled. got ${typeof exp}`)
+      return false;
+  }
+}
+
+function testInfixExpression(exp: Expression, left: any, operator: string, right: any): boolean {
+  const opExp = exp as InfixExpression;
+  expect(opExp).toBeInstanceOf(InfixExpression);
+
+  if (opExp.left) {
+    expect(testLiteralExpression(opExp.left, left)).toBe(true);
+  }
+
+  expect(opExp.operator).toBe(operator);
+
+  if (opExp.right) {
+    expect(testLiteralExpression(opExp.right, right)).toBe(true);
+  }
 
   return true;
 }

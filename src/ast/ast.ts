@@ -73,7 +73,7 @@ export class InfixExpression {
   }
 }
 
-export class IntegralLiteral {
+export class IntegerLiteral {
   token!: Token;
   value!: number;
 
@@ -94,7 +94,7 @@ export class IntegralLiteral {
 
 // AST root
 export class Program {
-  statements: (Statement | LetStatement | ReturnStatement | ExpressionStatement | IntegralLiteral | PrefixExpression)[] = [];
+  statements: (Statement | LetStatement | ReturnStatement | ExpressionStatement | IntegerLiteral | PrefixExpression)[] = [];
 
   tokenLiteral(): string {
     if (this.statements.length > 0) {

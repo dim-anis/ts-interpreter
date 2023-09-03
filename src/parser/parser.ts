@@ -1,6 +1,6 @@
 import { Lexer } from "../lexer/lexer";
 import { Token, TokenItem, TokenType } from "../token/token";
-import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegralLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement } from "../ast/ast";
+import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement } from "../ast/ast";
 
 type PrefixParseFn = () => Expression | null;
 type InfixParseFn = (expr: Expression) => Expression | null;
@@ -203,7 +203,7 @@ export class Parser {
   }
 
   parseIntegralLiteral(): Expression | null {
-    const literal = new IntegralLiteral(this._curToken);
+    const literal = new IntegerLiteral(this._curToken);
 
     const value = parseInt(this._curToken.literal);
 

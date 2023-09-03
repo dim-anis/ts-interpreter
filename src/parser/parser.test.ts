@@ -1,6 +1,6 @@
 import { Parser } from "./parser";
 import { Lexer } from "../lexer/lexer";
-import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegralLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement } from "../ast/ast";
+import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement } from "../ast/ast";
 import { check } from "prettier";
 
 test('test let statement', function() {
@@ -102,9 +102,9 @@ test('test integral literal expression', () => {
 
   const literal = (stmt as ExpressionStatement).expression;
 
-  expect(literal).toBeInstanceOf(IntegralLiteral);
+  expect(literal).toBeInstanceOf(IntegerLiteral);
 
-  if (literal instanceof IntegralLiteral) {
+  if (literal instanceof IntegerLiteral) {
     expect(literal.value).toBe(5);
     expect(literal.tokenLiteral()).toBe('5');
   }
@@ -221,7 +221,7 @@ test('test parsing infix expressions', () => {
 
     const stmt = program.statements[0];
 
-    expect(stmt).toBeInstanceOf(Statement || LetStatement || ReturnStatement || ExpressionStatement || IntegralLiteral || PrefixExpression);
+    expect(stmt).toBeInstanceOf(Statement || LetStatement || ReturnStatement || ExpressionStatement || IntegerLiteral || PrefixExpression);
 
     const exp = (stmt as ExpressionStatement).expression;
 
@@ -297,8 +297,8 @@ function testLetStatement(s: Statement, name: string) {
 }
 
 function testIntegralLiteral(il: Expression | null, value: number): boolean {
-  const int = il as IntegralLiteral;
-  expect(il).toBeInstanceOf(IntegralLiteral);
+  const int = il as IntegerLiteral;
+  expect(il).toBeInstanceOf(IntegerLiteral);
 
   expect(int.value).toBe(value);
 

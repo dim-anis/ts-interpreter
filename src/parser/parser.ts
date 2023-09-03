@@ -1,6 +1,6 @@
 import { Lexer } from "../lexer/lexer";
 import { Token, TokenItem, TokenType } from "../token/token";
-import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement } from "../ast/ast";
+import { BooleanLiteral, Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement } from "../ast/ast";
 
 type PrefixParseFn = () => Expression | null;
 type InfixParseFn = (expr: Expression) => Expression | null;
@@ -42,6 +42,8 @@ export class Parser {
     this.registerPrefix(TokenType.INT, this.parseIntegralLiteral.bind(this));
     this.registerPrefix(TokenType.BANG, this.parsePrefixExpression.bind(this));
     this.registerPrefix(TokenType.MINUS, this.parsePrefixExpression.bind(this));
+    this.registerPrefix(TokenType.TRUE, this.parseBoolean.bind(this));
+    this.registerPrefix(TokenType.FALSE, this.parseBoolean.bind(this));
 
     this.infixParseFns = new Map<TokenItem, InfixParseFn>();
     this.registerInfix(TokenType.PLUS, this.parseInfixExpression.bind(this));
@@ -236,6 +238,10 @@ export class Parser {
     expression.right = this.parseExpression(precedence);
 
     return expression;
+  }
+
+  parseBoolean(): Expression {
+    return new BooleanLiteral(this._curToken, this.curTokenIs(TokenType.TRUE));
   }
 
   noPrefixParseFnError(token: TokenItem) {

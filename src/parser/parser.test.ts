@@ -1,7 +1,6 @@
 import { Parser } from "./parser";
 import { Lexer } from "../lexer/lexer";
-import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement } from "../ast/ast";
-import { check } from "prettier";
+import { BooleanLiteral, Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement } from "../ast/ast";
 
 test('test let statement', function() {
   const input = `
@@ -110,22 +109,58 @@ test('test integral literal expression', () => {
   }
 })
 
+test('test boolean expression', () => {
+  const input = `
+true;
+`;
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  expect(program.statements.length).toBe(1);
+
+  const stmt = program.statements[0];
+
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+  const ident = (stmt as ExpressionStatement).expression;
+
+  expect(ident).toBeInstanceOf(BooleanLiteral);
+
+  if (ident instanceof BooleanLiteral) {
+    expect(ident.value).toBe(true);
+    expect(ident.tokenLiteral()).toBe('true');
+  }
+})
+
 test('test parsing prefix expressions', () => {
   const prefixTests: {
     input: string,
     operator: string,
-    integerValue: number
+    value: any
   }[] = [
       {
         input: '!5;',
         operator: '!',
-        integerValue: 5
+        value: 5
       },
       {
         input: '-15;',
         operator: '-',
-        integerValue: 15
-      }
+        value: 15
+      },
+      {
+        input: '!true;',
+        operator: '!',
+        value: true
+      },
+      {
+        input: '!false',
+        operator: '!',
+        value: false
+      },
     ];
 
   for (const test of prefixTests) {
@@ -145,10 +180,22 @@ test('test parsing prefix expressions', () => {
     expect(exp).toBeInstanceOf(PrefixExpression);
 
     if (exp instanceof PrefixExpression) {
-      expect(exp.operator).toBe(test.operator);
+      const literal = exp;
 
-      if (!testIntegralLiteral(exp.right, test.integerValue)) {
-        return;
+      if (literal.right instanceof IntegerLiteral) {
+        expect(literal.operator).toBe(test.operator);
+
+        if (!testIntegerLiteral(literal.right, test.value)) {
+          return;
+        }
+      }
+
+      if (literal.right instanceof BooleanLiteral) {
+        expect(literal.operator).toBe(test.operator);
+
+        if (!testBooleanLiteral(literal.right, test.value)) {
+          return;
+        }
       }
     }
   }
@@ -157,9 +204,9 @@ test('test parsing prefix expressions', () => {
 test('test parsing infix expressions', () => {
   const infixTests: {
     input: string,
-    leftValue: number,
+    leftValue: any,
     operator: string,
-    rightValue: number
+    rightValue: any
   }[] = [
       {
         input: '5 + 5;',
@@ -209,6 +256,25 @@ test('test parsing infix expressions', () => {
         operator: '!=',
         rightValue: 5
       },
+      {
+        input: 'true == true',
+        leftValue: true,
+        operator: '==',
+        rightValue: true
+      },
+      {
+        input: 'true != false',
+        leftValue: true,
+        operator: '!=',
+        rightValue: false
+      },
+      {
+        input: 'false == false',
+        leftValue: false,
+        operator: '==',
+        rightValue: false
+      },
+
     ]
 
   for (const test of infixTests) {
@@ -227,16 +293,10 @@ test('test parsing infix expressions', () => {
 
     expect(exp).toBeInstanceOf(InfixExpression);
 
-    if (exp instanceof InfixExpression) {
-      if (!testIntegralLiteral(exp.left, test.leftValue)) {
-        return;
-      }
+    if (exp === null) return;
 
-      expect(exp.operator).toBe(test.operator);
-
-      if (!testIntegralLiteral(exp.right, test.rightValue)) {
-        return;
-      }
+    if (!testInfixExpression(exp, test.leftValue, test.operator, test.rightValue)) {
+      return;
     }
   }
 });
@@ -257,7 +317,24 @@ test('operator precedence parsing', () => {
       {
         input: '5 < 4 != 3 > 4',
         expected: '((5 < 4) != (3 > 4))'
-      }
+      },
+      {
+        input: 'true',
+        expected: 'true'
+      },
+      {
+        input: 'false',
+        expected: 'false'
+      },
+      {
+        input: '3 > 5 == false',
+        expected: '((3 > 5) == false)'
+      },
+      {
+        input: '3 < 5 == true',
+        expected: '((3 < 5) == true)'
+      },
+
     ];
 
   for (const test of tests) {
@@ -288,32 +365,50 @@ function checkParserErrors(p: Parser) {
 function testLetStatement(s: Statement, name: string) {
   expect(s.tokenLiteral()).toBe('let');
 
-  const letStmt = s as LetStatement;
-  expect(letStmt).toBeInstanceOf(LetStatement);
+  const letStmt = s;
 
-  expect(letStmt.name.value).toBe(name);
+  expect(letStmt).toBeInstanceOf(LetStatement);
+  if (letStmt instanceof LetStatement) {
+    expect(letStmt.name.value).toBe(name);
+  }
 
   return true;
 }
 
-function testIntegralLiteral(il: Expression | null, value: number): boolean {
-  const int = il as IntegerLiteral;
+function testIntegerLiteral(il: Expression | null, value: number): boolean {
+  const int = il;
+
   expect(il).toBeInstanceOf(IntegerLiteral);
 
-  expect(int.value).toBe(value);
+  if (int instanceof IntegerLiteral) {
+    expect(int.value).toBe(value);
+    expect(int.tokenLiteral()).toBe(value.toString());
+  }
+  return true;
+}
 
-  expect(int.tokenLiteral()).toBe(value.toString());
+function testBooleanLiteral(exp: Expression, value: boolean): boolean {
+  const bl = exp;
+
+  expect(bl).toBeInstanceOf(BooleanLiteral);
+
+  if (bl instanceof BooleanLiteral) {
+    expect(bl.value).toBe(value);
+    expect(bl.tokenLiteral()).toBe(value.toString());
+  }
 
   return true;
 }
 
 function testIdentifier(exp: Expression, value: string): boolean {
-  const ident = exp as Identifier;
+  const ident = exp;
+
   expect(ident).toBeInstanceOf(Identifier);
 
-  expect(ident.value).toBe(value);
-
-  expect(ident.tokenLiteral()).toBe(value);
+  if (ident instanceof Identifier) {
+    expect(ident.value).toBe(value);
+    expect(ident.tokenLiteral()).toBe(value);
+  }
 
   return true;
 }
@@ -321,9 +416,11 @@ function testIdentifier(exp: Expression, value: string): boolean {
 function testLiteralExpression(exp: Expression, expected: any): boolean {
   switch (typeof expected) {
     case 'number':
-      return testIntegralLiteral(exp, expected);
+      return testIntegerLiteral(exp, expected);
     case 'string':
       return testIdentifier(exp, expected);
+    case 'boolean':
+      return testBooleanLiteral(exp, expected);
     default:
       console.error(`type of exp not handled. got ${typeof exp}`)
       return false;
@@ -331,17 +428,20 @@ function testLiteralExpression(exp: Expression, expected: any): boolean {
 }
 
 function testInfixExpression(exp: Expression, left: any, operator: string, right: any): boolean {
-  const opExp = exp as InfixExpression;
+  const opExp = exp;
+
   expect(opExp).toBeInstanceOf(InfixExpression);
 
-  if (opExp.left) {
-    expect(testLiteralExpression(opExp.left, left)).toBe(true);
-  }
+  if (opExp instanceof InfixExpression) {
+    if (opExp.left) {
+      expect(testLiteralExpression(opExp.left, left)).toBe(true);
+    }
 
-  expect(opExp.operator).toBe(operator);
+    expect(opExp.operator).toBe(operator);
 
-  if (opExp.right) {
-    expect(testLiteralExpression(opExp.right, right)).toBe(true);
+    if (opExp.right) {
+      expect(testLiteralExpression(opExp.right, right)).toBe(true);
+    }
   }
 
   return true;

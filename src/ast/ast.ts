@@ -74,7 +74,7 @@ export class InfixExpression {
 }
 
 export class IntegerLiteral {
-  token!: Token;
+  token: Token;
   value!: number;
 
   constructor(token: Token) {
@@ -82,7 +82,27 @@ export class IntegerLiteral {
   }
 
   expressionNode(): void {
-    console.log('IntegralLiteral expressionNode()')
+    console.log('IntegerLiteral expressionNode()')
+  }
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  string(): string {
+    return this.token.literal;
+  }
+}
+
+export class BooleanLiteral {
+  token: Token;
+  value: boolean;
+
+  constructor(token: Token, value: boolean) {
+    this.token = token;
+    this.value = value;
+  }
+
+  expressionNode(): void {
+    console.log('Boolean expressionNode()')
   }
   tokenLiteral(): string {
     return this.token.literal;

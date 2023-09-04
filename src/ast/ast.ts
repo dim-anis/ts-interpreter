@@ -73,6 +73,29 @@ export class InfixExpression {
   }
 }
 
+export class IfExpression {
+  token: Token;
+  condition!: Expression | null;
+  consequence!: BlockStatement;
+  alternative!: BlockStatement;
+
+  constructor(token: Token) {
+    this.token = token;
+  }
+
+  expressionNode(): void {
+    console.log('IfExpression expressionNode()');
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  string(): string {
+    return `if${this.condition?.string()} ${this.consequence.string()}${this.alternative ? `else ${this.alternative.string()}` : ''}`;
+  }
+}
+
 export class IntegerLiteral {
   token: Token;
   value!: number;
@@ -127,7 +150,7 @@ export class Program {
   string(): string {
     const out: string[] = [];
     this.statements.forEach((stmt) => out.push(stmt.string()));
-    return out.join(',');
+    return out.join('');
   }
 }
 
@@ -136,7 +159,7 @@ export class LetStatement extends Statement {
   value!: Expression;
 
   string(): string {
-    return `${this.tokenLiteral()} ${this.name.string()} = ${this.value.string() ? this.value.string() : ''};`;
+    return `${this.tokenLiteral()} ${this.name.string()} = ${this.value.string() !== null ? this.value.string() : ''};`;
   }
 }
 
@@ -169,6 +192,28 @@ export class ExpressionStatement extends Statement {
     }
 
     return '';
+  }
+}
+
+export class BlockStatement extends Statement {
+  statements!: Statement[];
+
+  statementNode(): void {
+    console.log('BlockStatement statementNode()')
+  }
+
+  tokenLiteral(): string {
+    return this.tokenLiteral();
+  }
+
+  string(): string {
+    const out: string[] = [];
+
+    for (const stmt of this.statements) {
+      out.push(stmt.string());
+    }
+
+    return out.join('');
   }
 }
 

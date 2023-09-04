@@ -1,6 +1,6 @@
 import { Parser } from "./parser";
 import { Lexer } from "../lexer/lexer";
-import { BooleanLiteral, Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement } from "../ast/ast";
+import { BooleanLiteral, Expression, ExpressionStatement, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement } from "../ast/ast";
 
 test('test let statement', function() {
   const input = `
@@ -18,9 +18,8 @@ let foobar = 838383;
   if (program === null) {
     console.log('parseProgram() returned null');
   }
-  if (program.statements.length !== 3) {
-    console.log(`program.statements does not contain 3 statements, includes ${program.statements.length} statements`);
-  }
+  
+  expect(program.statements.length).toBe(3);
 
   const expectedIds = ['x', 'y', 'foobar'];
 
@@ -301,7 +300,7 @@ test('test parsing infix expressions', () => {
   }
 });
 
-test('operator precedence parsing', () => {
+test('test operator precedence parsing', () => {
   const tests: {
     input: string,
     expected: string
@@ -334,7 +333,26 @@ test('operator precedence parsing', () => {
         input: '3 < 5 == true',
         expected: '((3 < 5) == true)'
       },
-
+      {
+        input: '1 + (2 + 3) + 4',
+        expected: '((1 + (2 + 3)) + 4)'
+      },
+      {
+        input: '(5 + 5) * 2',
+        expected: '((5 + 5) * 2)'
+      },
+      {
+        input: '2 / (5 + 5)',
+        expected: '(2 / (5 + 5))'
+      },
+      {
+        input: '-(5 + 5)',
+        expected: '(-(5 + 5))'
+      },
+      {
+        input: '!(true == true)',
+        expected: '(!(true == true))'
+      },
     ];
 
   for (const test of tests) {
@@ -346,6 +364,104 @@ test('operator precedence parsing', () => {
     const actual = program.string();
 
     expect(actual).toBe(test.expected);
+  }
+})
+
+test('test if expression', () => {
+  const input = `if (x < y) { x }`;
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  expect(program.statements.length).toBe(1);
+
+  const stmt = program.statements[0];
+
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+  if (stmt instanceof ExpressionStatement) {
+    const exp = stmt.expression;
+
+    expect(exp).toBeInstanceOf(IfExpression);
+
+    if (exp instanceof IfExpression) {
+      if (exp.condition) {
+        if (!testInfixExpression(exp.condition, 'x', '<', 'y')) {
+          return;
+        }
+      }
+
+      expect(exp.consequence.statements.length).toBe(1);
+
+      const consequence = exp.consequence.statements[0];
+
+      expect(consequence).toBeInstanceOf(ExpressionStatement);
+
+      if (consequence && consequence instanceof ExpressionStatement) {
+        if (consequence.expression) {
+          if (!testIdentifier(consequence.expression, 'x')) {
+            return;
+          }
+        }
+      }
+
+      expect(exp.alternative).toBe(undefined);
+    }
+  }
+})
+
+test('test if else expression', () => {
+  const input = `if (x < y) { x } else { y }`;
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  expect(program.statements.length).toBe(1);
+
+  const stmt = program.statements[0];
+
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+  if (stmt instanceof ExpressionStatement) {
+    const exp = stmt.expression;
+
+    expect(exp).toBeInstanceOf(IfExpression);
+
+    if (exp instanceof IfExpression) {
+      if (exp.condition) {
+        if (!testInfixExpression(exp.condition, 'x', '<', 'y')) {
+          return;
+        }
+      }
+
+      expect(exp.consequence.statements.length).toBe(1);
+
+      const consequence = exp.consequence.statements[0];
+
+      if (consequence && consequence instanceof ExpressionStatement) {
+        if (consequence.expression) {
+          if (!testIdentifier(consequence.expression, 'x')) {
+            return;
+          }
+        }
+      }
+
+      expect(exp.alternative.statements.length).toBe(1);
+
+      const alternative = exp.alternative.statements[0];
+
+      if (alternative && alternative instanceof ExpressionStatement) {
+        if (alternative.expression) {
+          if (!testIdentifier(alternative.expression, 'y')) {
+            return;
+          }
+        }
+      }
+    }
   }
 })
 

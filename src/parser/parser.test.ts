@@ -1,13 +1,26 @@
-import { Parser } from "./parser";
-import { Lexer } from "../lexer/lexer";
-import { BooleanLiteral, Expression, ExpressionStatement, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Statement } from "../ast/ast";
+import { Parser } from './parser';
+import { Lexer } from '../lexer/lexer';
+import {
+  BooleanLiteral,
+  Expression,
+  ExpressionStatement,
+  FunctionLiteral,
+  Identifier,
+  IfExpression,
+  InfixExpression,
+  IntegerLiteral,
+  LetStatement,
+  PrefixExpression,
+  ReturnStatement,
+  Statement,
+} from '../ast/ast';
 
-test('test let statement', function() {
+test('test let statement', function () {
   const input = `
 let x = 5;
 let y = 10;
 let foobar = 838383;
-`
+`;
 
   const l = new Lexer(input);
   const p = new Parser(l);
@@ -18,7 +31,7 @@ let foobar = 838383;
   if (program === null) {
     console.log('parseProgram() returned null');
   }
-  
+
   expect(program.statements.length).toBe(3);
 
   const expectedIds = ['x', 'y', 'foobar'];
@@ -27,8 +40,10 @@ let foobar = 838383;
     const statement = program.statements[i];
 
     if (!(statement instanceof LetStatement)) {
-      p._errors.push(`not LetStatement. expected LetStatement, got=${statement.token.type}`)
-      throw (`not LetStatement. expected LetStatement, got=${statement.token.type}`);
+      p._errors.push(
+        `not LetStatement. expected LetStatement, got=${statement.token.type}`,
+      );
+      throw `not LetStatement. expected LetStatement, got=${statement.token.type}`;
     }
 
     expect(testLetStatement(statement, expectedIds[i])).toBe(true);
@@ -37,13 +52,12 @@ let foobar = 838383;
   expect(checkParserErrors).toThrow();
 });
 
-
 test('test return statement', () => {
   const input = `
 return 5;
 return 10;
 return 993322;
-`
+`;
   const l = new Lexer(input);
   const p = new Parser(l);
 
@@ -58,7 +72,7 @@ return 993322;
     expect(returnStmt).toBeInstanceOf(ReturnStatement);
     expect(returnStmt.tokenLiteral()).toBe('return');
   }
-})
+});
 
 test('test identifier expression', () => {
   const input = 'foobar;';
@@ -82,7 +96,7 @@ test('test identifier expression', () => {
     expect(ident.value).toBe('foobar');
     expect(ident.tokenLiteral()).toBe('foobar');
   }
-})
+});
 
 test('test integral literal expression', () => {
   const input = '5;';
@@ -106,7 +120,7 @@ test('test integral literal expression', () => {
     expect(literal.value).toBe(5);
     expect(literal.tokenLiteral()).toBe('5');
   }
-})
+});
 
 test('test boolean expression', () => {
   const input = `
@@ -132,35 +146,35 @@ true;
     expect(ident.value).toBe(true);
     expect(ident.tokenLiteral()).toBe('true');
   }
-})
+});
 
 test('test parsing prefix expressions', () => {
   const prefixTests: {
-    input: string,
-    operator: string,
-    value: any
+    input: string;
+    operator: string;
+    value: any;
   }[] = [
-      {
-        input: '!5;',
-        operator: '!',
-        value: 5
-      },
-      {
-        input: '-15;',
-        operator: '-',
-        value: 15
-      },
-      {
-        input: '!true;',
-        operator: '!',
-        value: true
-      },
-      {
-        input: '!false',
-        operator: '!',
-        value: false
-      },
-    ];
+    {
+      input: '!5;',
+      operator: '!',
+      value: 5,
+    },
+    {
+      input: '-15;',
+      operator: '-',
+      value: 15,
+    },
+    {
+      input: '!true;',
+      operator: '!',
+      value: true,
+    },
+    {
+      input: '!false',
+      operator: '!',
+      value: false,
+    },
+  ];
 
   for (const test of prefixTests) {
     const l = new Lexer(test.input);
@@ -198,83 +212,82 @@ test('test parsing prefix expressions', () => {
       }
     }
   }
-})
+});
 
 test('test parsing infix expressions', () => {
   const infixTests: {
-    input: string,
-    leftValue: any,
-    operator: string,
-    rightValue: any
+    input: string;
+    leftValue: any;
+    operator: string;
+    rightValue: any;
   }[] = [
-      {
-        input: '5 + 5;',
-        leftValue: 5,
-        operator: '+',
-        rightValue: 5
-      },
-      {
-        input: '5 - 5;',
-        leftValue: 5,
-        operator: '-',
-        rightValue: 5
-      },
-      {
-        input: '5 * 5;',
-        leftValue: 5,
-        operator: '*',
-        rightValue: 5
-      },
-      {
-        input: '5 / 5;',
-        leftValue: 5,
-        operator: '/',
-        rightValue: 5
-      },
-      {
-        input: '5 > 5;',
-        leftValue: 5,
-        operator: '>',
-        rightValue: 5
-      },
-      {
-        input: '5 < 5;',
-        leftValue: 5,
-        operator: '<',
-        rightValue: 5
-      },
-      {
-        input: '5 == 5;',
-        leftValue: 5,
-        operator: '==',
-        rightValue: 5
-      },
-      {
-        input: '5 != 5;',
-        leftValue: 5,
-        operator: '!=',
-        rightValue: 5
-      },
-      {
-        input: 'true == true',
-        leftValue: true,
-        operator: '==',
-        rightValue: true
-      },
-      {
-        input: 'true != false',
-        leftValue: true,
-        operator: '!=',
-        rightValue: false
-      },
-      {
-        input: 'false == false',
-        leftValue: false,
-        operator: '==',
-        rightValue: false
-      },
-
-    ]
+    {
+      input: '5 + 5;',
+      leftValue: 5,
+      operator: '+',
+      rightValue: 5,
+    },
+    {
+      input: '5 - 5;',
+      leftValue: 5,
+      operator: '-',
+      rightValue: 5,
+    },
+    {
+      input: '5 * 5;',
+      leftValue: 5,
+      operator: '*',
+      rightValue: 5,
+    },
+    {
+      input: '5 / 5;',
+      leftValue: 5,
+      operator: '/',
+      rightValue: 5,
+    },
+    {
+      input: '5 > 5;',
+      leftValue: 5,
+      operator: '>',
+      rightValue: 5,
+    },
+    {
+      input: '5 < 5;',
+      leftValue: 5,
+      operator: '<',
+      rightValue: 5,
+    },
+    {
+      input: '5 == 5;',
+      leftValue: 5,
+      operator: '==',
+      rightValue: 5,
+    },
+    {
+      input: '5 != 5;',
+      leftValue: 5,
+      operator: '!=',
+      rightValue: 5,
+    },
+    {
+      input: 'true == true',
+      leftValue: true,
+      operator: '==',
+      rightValue: true,
+    },
+    {
+      input: 'true != false',
+      leftValue: true,
+      operator: '!=',
+      rightValue: false,
+    },
+    {
+      input: 'false == false',
+      leftValue: false,
+      operator: '==',
+      rightValue: false,
+    },
+  ];
 
   for (const test of infixTests) {
     const l = new Lexer(test.input);
@@ -286,7 +299,14 @@ test('test parsing infix expressions', () => {
 
     const stmt = program.statements[0];
 
-    expect(stmt).toBeInstanceOf(Statement || LetStatement || ReturnStatement || ExpressionStatement || IntegerLiteral || PrefixExpression);
+    expect(stmt).toBeInstanceOf(
+      Statement ||
+        LetStatement ||
+        ReturnStatement ||
+        ExpressionStatement ||
+        IntegerLiteral ||
+        PrefixExpression,
+    );
 
     const exp = (stmt as ExpressionStatement).expression;
 
@@ -294,7 +314,9 @@ test('test parsing infix expressions', () => {
 
     if (exp === null) return;
 
-    if (!testInfixExpression(exp, test.leftValue, test.operator, test.rightValue)) {
+    if (
+      !testInfixExpression(exp, test.leftValue, test.operator, test.rightValue)
+    ) {
       return;
     }
   }
@@ -302,58 +324,58 @@ test('test parsing infix expressions', () => {
 
 test('test operator precedence parsing', () => {
   const tests: {
-    input: string,
-    expected: string
+    input: string;
+    expected: string;
   }[] = [
-      {
-        input: '-a * b',
-        expected: '((-a) * b)'
-      },
-      {
-        input: '!-a',
-        expected: '(!(-a))'
-      },
-      {
-        input: '5 < 4 != 3 > 4',
-        expected: '((5 < 4) != (3 > 4))'
-      },
-      {
-        input: 'true',
-        expected: 'true'
-      },
-      {
-        input: 'false',
-        expected: 'false'
-      },
-      {
-        input: '3 > 5 == false',
-        expected: '((3 > 5) == false)'
-      },
-      {
-        input: '3 < 5 == true',
-        expected: '((3 < 5) == true)'
-      },
-      {
-        input: '1 + (2 + 3) + 4',
-        expected: '((1 + (2 + 3)) + 4)'
-      },
-      {
-        input: '(5 + 5) * 2',
-        expected: '((5 + 5) * 2)'
-      },
-      {
-        input: '2 / (5 + 5)',
-        expected: '(2 / (5 + 5))'
-      },
-      {
-        input: '-(5 + 5)',
-        expected: '(-(5 + 5))'
-      },
-      {
-        input: '!(true == true)',
-        expected: '(!(true == true))'
-      },
-    ];
+    {
+      input: '-a * b',
+      expected: '((-a) * b)',
+    },
+    {
+      input: '!-a',
+      expected: '(!(-a))',
+    },
+    {
+      input: '5 < 4 != 3 > 4',
+      expected: '((5 < 4) != (3 > 4))',
+    },
+    {
+      input: 'true',
+      expected: 'true',
+    },
+    {
+      input: 'false',
+      expected: 'false',
+    },
+    {
+      input: '3 > 5 == false',
+      expected: '((3 > 5) == false)',
+    },
+    {
+      input: '3 < 5 == true',
+      expected: '((3 < 5) == true)',
+    },
+    {
+      input: '1 + (2 + 3) + 4',
+      expected: '((1 + (2 + 3)) + 4)',
+    },
+    {
+      input: '(5 + 5) * 2',
+      expected: '((5 + 5) * 2)',
+    },
+    {
+      input: '2 / (5 + 5)',
+      expected: '(2 / (5 + 5))',
+    },
+    {
+      input: '-(5 + 5)',
+      expected: '(-(5 + 5))',
+    },
+    {
+      input: '!(true == true)',
+      expected: '(!(true == true))',
+    },
+  ];
 
   for (const test of tests) {
     const l = new Lexer(test.input);
@@ -365,7 +387,7 @@ test('test operator precedence parsing', () => {
 
     expect(actual).toBe(test.expected);
   }
-})
+});
 
 test('test if expression', () => {
   const input = `if (x < y) { x }`;
@@ -410,7 +432,7 @@ test('test if expression', () => {
       expect(exp.alternative).toBe(undefined);
     }
   }
-})
+});
 
 test('test if else expression', () => {
   const input = `if (x < y) { x } else { y }`;
@@ -463,7 +485,67 @@ test('test if else expression', () => {
       }
     }
   }
-})
+});
+
+test('test function literal parsing', () => {
+  const input = `fn(x, y) { x + y; }`;
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  expect(program.statements.length).toBe(1);
+
+  const stmt = program.statements[0];
+
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+  if (stmt instanceof ExpressionStatement) {
+    const fn = stmt.expression;
+
+    expect(fn).toBeInstanceOf(FunctionLiteral);
+
+    if (fn instanceof FunctionLiteral) {
+      expect(fn.parameters?.length).toBe(2);
+
+      if (!fn.parameters) return;
+
+      testLiteralExpression(fn.parameters[0], 'x');
+      testLiteralExpression(fn.parameters[1], 'y');
+
+      expect(fn.body.statements.length).toBe(1);
+
+      const bodyStmt = fn.body.statements[0];
+
+      expect(bodyStmt).toBeInstanceOf(ExpressionStatement);
+
+      if (bodyStmt instanceof ExpressionStatement) {
+        if (bodyStmt.expression) {
+          testInfixExpression(bodyStmt.expression, 'x', '+', 'y');
+        }
+      }
+    }
+  }
+});
+
+test('test function parameter parsing', () => {
+  const tests: {
+    input: string;
+    expectedParams: string[];
+  }[] = [
+    { input: 'fn() {};', expectedParams: [] },
+    { input: 'fn(x) {};', expectedParams: ['x'] },
+    { input: 'fn(x, y, z) {};', expectedParams: ['x', 'y', 'z'] },
+  ];
+
+  for (const test of tests) {
+    const l = new Lexer(test.input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
+    checkParserErrors(p);
+  }
+});
 
 function checkParserErrors(p: Parser) {
   const errors = p._errors;
@@ -473,9 +555,9 @@ function checkParserErrors(p: Parser) {
   }
 
   const errMsgs = [`parser has ${errors.length} errors`];
-  errors.forEach(err => errMsgs.push(err));
+  errors.forEach((err) => errMsgs.push(err));
 
-  throw new Error(errMsgs.join("\n"));
+  throw new Error(errMsgs.join('\n'));
 }
 
 function testLetStatement(s: Statement, name: string) {
@@ -538,12 +620,17 @@ function testLiteralExpression(exp: Expression, expected: any): boolean {
     case 'boolean':
       return testBooleanLiteral(exp, expected);
     default:
-      console.error(`type of exp not handled. got ${typeof exp}`)
+      console.error(`type of exp not handled. got ${typeof exp}`);
       return false;
   }
 }
 
-function testInfixExpression(exp: Expression, left: any, operator: string, right: any): boolean {
+function testInfixExpression(
+  exp: Expression,
+  left: any,
+  operator: string,
+  right: any,
+): boolean {
   const opExp = exp;
 
   expect(opExp).toBeInstanceOf(InfixExpression);

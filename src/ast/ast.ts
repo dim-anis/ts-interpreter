@@ -1,4 +1,4 @@
-import { Token } from "../token/token";
+import { Token } from '../token/token';
 
 export class Node {
   token: Token;
@@ -10,7 +10,7 @@ export class Node {
     return this.token.literal;
   }
   string(): string {
-    return 'Node string()'
+    return 'Node string()';
   }
 }
 
@@ -92,7 +92,9 @@ export class IfExpression {
   }
 
   string(): string {
-    return `if${this.condition?.string()} ${this.consequence.string()}${this.alternative ? `else ${this.alternative.string()}` : ''}`;
+    return `if${this.condition?.string()} ${this.consequence.string()}${
+      this.alternative ? `else ${this.alternative.string()}` : ''
+    }`;
   }
 }
 
@@ -105,7 +107,7 @@ export class IntegerLiteral {
   }
 
   expressionNode(): void {
-    console.log('IntegerLiteral expressionNode()')
+    console.log('IntegerLiteral expressionNode()');
   }
   tokenLiteral(): string {
     return this.token.literal;
@@ -125,7 +127,7 @@ export class BooleanLiteral {
   }
 
   expressionNode(): void {
-    console.log('Boolean expressionNode()')
+    console.log('BooleanLiteral expressionNode()');
   }
   tokenLiteral(): string {
     return this.token.literal;
@@ -135,13 +137,47 @@ export class BooleanLiteral {
   }
 }
 
+export class FunctionLiteral {
+  token: Token;
+  parameters!: Identifier[] | null;
+  body!: BlockStatement;
+
+  constructor(token: Token) {
+    this.token = token;
+  }
+
+  expressionNode(): void {
+    console.log('FunctionLiteral expressionNode()');
+  }
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  string(): string {
+    const params: string[] = [];
+    if (this.parameters) {
+      for (const param of this.parameters) {
+        params.push(param.string());
+      }
+    }
+
+    return `${this.tokenLiteral()}(${params.join(', ')})${this.body.string()}`;
+  }
+}
+
 // AST root
 export class Program {
-  statements: (Statement | LetStatement | ReturnStatement | ExpressionStatement | IntegerLiteral | PrefixExpression)[] = [];
+  statements: (
+    | Statement
+    | LetStatement
+    | ReturnStatement
+    | ExpressionStatement
+    | IntegerLiteral
+    | PrefixExpression
+  )[] = [];
 
   tokenLiteral(): string {
     if (this.statements.length > 0) {
-      return this.statements[0].tokenLiteral()
+      return this.statements[0].tokenLiteral();
     } else {
       return '';
     }
@@ -159,7 +195,9 @@ export class LetStatement extends Statement {
   value!: Expression;
 
   string(): string {
-    return `${this.tokenLiteral()} ${this.name.string()} = ${this.value.string() !== null ? this.value.string() : ''};`;
+    return `${this.tokenLiteral()} ${this.name.string()} = ${
+      this.value.string() !== null ? this.value.string() : ''
+    };`;
   }
 }
 
@@ -179,7 +217,9 @@ export class ReturnStatement extends Statement {
   }
 
   string(): string {
-    return `${this.tokenLiteral()} ${this.returnValue ? this.returnValue : ''};`;
+    return `${this.tokenLiteral()} ${
+      this.returnValue ? this.returnValue : ''
+    };`;
   }
 }
 
@@ -199,7 +239,7 @@ export class BlockStatement extends Statement {
   statements!: Statement[];
 
   statementNode(): void {
-    console.log('BlockStatement statementNode()')
+    console.log('BlockStatement statementNode()');
   }
 
   tokenLiteral(): string {
@@ -227,8 +267,8 @@ export class Identifier {
   }
 
   expressionNode(): void {
-    console.log('Am a dummy method')
-  };
+    console.log('Am a dummy method');
+  }
 
   tokenLiteral(): string {
     return this.token.literal;

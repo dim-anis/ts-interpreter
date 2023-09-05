@@ -98,6 +98,35 @@ export class IfExpression {
   }
 }
 
+export class CallExpression {
+  token: Token;
+  fn!: Expression;
+  arguments!: Expression[];
+
+  constructor(token: Token, fn: Expression) {
+    this.token = token;
+    this.fn = fn;
+  }
+
+  expressionNode(): void {
+    console.log('CallExpression expressionNode()');
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
+  string(): string {
+    const out: string[] = [];
+
+    for (const arg of this.arguments) {
+      out.push(arg.string());
+    }
+
+    return `${this.fn.string()}(${out.join(', ')})`;
+  }
+}
+
 export class IntegerLiteral {
   token: Token;
   value!: number;

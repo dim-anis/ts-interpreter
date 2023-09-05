@@ -3,6 +3,7 @@ import { Token, TokenItem, TokenType } from '../token/token';
 import {
   BlockStatement,
   BooleanLiteral,
+  CallExpression,
   Expression,
   ExpressionStatement,
   FunctionLiteral,
@@ -39,6 +40,7 @@ precedences.set(TokenType.PLUS, Precedence.SUM);
 precedences.set(TokenType.MINUS, Precedence.SUM);
 precedences.set(TokenType.SLASH, Precedence.PRODUCT);
 precedences.set(TokenType.ASTERISK, Precedence.PRODUCT);
+precedences.set(TokenType.LPAREN, Precedence.CALL);
 
 export class Parser {
   private _curToken!: Token;
@@ -64,7 +66,10 @@ export class Parser {
       this.parseGroupedExpression.bind(this),
     );
     this.registerPrefix(TokenType.IF, this.parseIfExpression.bind(this));
-    this.registerPrefix(TokenType.FUNCTION, this.parseFunctionLiteral.bind(this));
+    this.registerPrefix(
+      TokenType.FUNCTION,
+      this.parseFunctionLiteral.bind(this),
+    );
 
     this.infixParseFns = new Map<TokenItem, InfixParseFn>();
     this.registerInfix(TokenType.PLUS, this.parseInfixExpression.bind(this));
@@ -78,6 +83,7 @@ export class Parser {
     this.registerInfix(TokenType.NOT_EQ, this.parseInfixExpression.bind(this));
     this.registerInfix(TokenType.LT, this.parseInfixExpression.bind(this));
     this.registerInfix(TokenType.GT, this.parseInfixExpression.bind(this));
+    this.registerInfix(TokenType.LPAREN, this.parseCallExpression.bind(this));
   }
 
   registerPrefix(tokenType: TokenItem, fn: PrefixParseFn) {
@@ -315,6 +321,46 @@ export class Parser {
     expression.right = this.parseExpression(precedence);
 
     return expression;
+  }
+
+  parseCallExpression(fn: Expression): Expression {
+    const exp = new CallExpression(this._curToken, fn);
+    const args = this.parseCallArguments();
+    if (args) {
+      exp.arguments = args;
+    }
+
+    return exp;
+  }
+
+  parseCallArguments(): Expression[] | null {
+    const args: Expression[] = [];
+
+    if (this.peekTokenIs(TokenType.RPAREN)) {
+      this.nextToken();
+      return args;
+    }
+
+    this.nextToken();
+    const arg = this.parseExpression(Precedence.LOWEST);
+    if (arg) {
+      args.push(arg);
+    }
+
+    while (this.peekTokenIs(TokenType.COMMA)) {
+      this.nextToken();
+      this.nextToken();
+      const arg = this.parseExpression(Precedence.LOWEST);
+      if (arg) {
+        args.push(arg);
+      }
+    }
+
+    if (!this.expectPeek(TokenType.RPAREN)) {
+      return null;
+    }
+
+    return args;
   }
 
   parseBoolean(): Expression {

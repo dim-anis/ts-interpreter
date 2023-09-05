@@ -544,6 +544,24 @@ test('test function parameter parsing', () => {
     const p = new Parser(l);
     const program = p.parseProgram();
     checkParserErrors(p);
+
+    const stmt = program.statements[0];
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+    if (stmt instanceof ExpressionStatement) {
+      const fn = stmt.expression;
+      expect(fn).toBeInstanceOf(FunctionLiteral);
+
+      if (fn instanceof FunctionLiteral) {
+        expect(fn.parameters?.length).toBe(test.expectedParams.length);
+
+        for (let i = 0; i < test.expectedParams.length; i++) {
+          if (fn.parameters) {
+            testLiteralExpression(fn.parameters[i], test.expectedParams[i]);
+          }
+        }
+      }
+    }
   }
 });
 

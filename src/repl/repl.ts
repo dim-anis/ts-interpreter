@@ -2,6 +2,7 @@ import { Lexer } from '../lexer/lexer';
 import * as readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { Parser } from '../parser/parser';
+import { monkeyEval } from '../evaluator/evaluator';
 
 function printParseErrors(errors: string[]) {
   const out: string[] = [
@@ -39,7 +40,11 @@ but be careful not to launch your machine into an infinite loop as this is a WIP
       printParseErrors(p.errors());
     }
 
-    console.log(program.string());
+    const evaluated = monkeyEval(program);
+    if (evaluated !== null) {
+      console.log(`${evaluated.inspect()}\n`);
+    }
+
     rl.prompt();
   });
 

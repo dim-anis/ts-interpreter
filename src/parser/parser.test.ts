@@ -331,25 +331,17 @@ test('test parsing infix expressions', () => {
 
     const stmt = program.statements[0];
 
-    expect(stmt).toBeInstanceOf(
-      Statement ||
-      LetStatement ||
-      ReturnStatement ||
-      ExpressionStatement ||
-      IntegerLiteral ||
-      PrefixExpression,
-    );
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
 
-    const exp = (stmt as ExpressionStatement).expression;
+    if (stmt instanceof ExpressionStatement) {
+      const exp = stmt.expression;
+      expect(exp).toBeInstanceOf(InfixExpression);
 
-    expect(exp).toBeInstanceOf(InfixExpression);
+      if (exp === null) return;
 
-    if (exp === null) return;
-
-    if (
-      !testInfixExpression(exp, test.leftValue, test.operator, test.rightValue)
-    ) {
-      return;
+      if (exp instanceof InfixExpression) {
+        expect(testInfixExpression(exp, test.leftValue, test.operator, test.rightValue)).toBe(true);
+      }
     }
   }
 });

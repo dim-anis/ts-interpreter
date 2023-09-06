@@ -1,32 +1,19 @@
 import { Token } from '../token/token';
 
-export class Node {
-  token: Token;
-
-  constructor(token: Token) {
-    this.token = token;
-  }
-  tokenLiteral(): string {
-    return this.token.literal;
-  }
-  string(): string {
-    return 'Node string()';
-  }
+export interface Node {
+  tokenLiteral(): string;
+  string(): string;
 }
 
-export class Statement extends Node {
-  statementNode(): void {
-    console.log('Statement statementNode()');
-  }
+export interface Statement extends Node {
+  statementNode(): string;
 }
 
-export class Expression extends Node {
-  expressionNode(): void {
-    console.log('Expression expressionNode()');
-  }
+export interface Expression extends Node {
+  expressionNode(): string
 }
 
-export class PrefixExpression {
+export class PrefixExpression implements Expression{
   token: Token;
   operator: string;
   right!: Expression | null;
@@ -36,8 +23,8 @@ export class PrefixExpression {
     this.operator = token.literal;
   }
 
-  expressionNode(): void {
-    console.log('PrefixExpression expressionNode()');
+  expressionNode(): string {
+    return 'expressionNode';
   }
 
   tokenLiteral(): string {
@@ -49,7 +36,7 @@ export class PrefixExpression {
   }
 }
 
-export class InfixExpression {
+export class InfixExpression implements Expression{
   token: Token;
   left!: Expression | null;
   operator: string;
@@ -60,8 +47,8 @@ export class InfixExpression {
     this.operator = token.literal;
   }
 
-  expressionNode(): void {
-    console.log('InfixExpression expressionNode()');
+  expressionNode(): string {
+    return 'expressionNode';
   }
 
   tokenLiteral(): string {
@@ -73,7 +60,7 @@ export class InfixExpression {
   }
 }
 
-export class IfExpression {
+export class IfExpression implements Expression{
   token: Token;
   condition!: Expression | null;
   consequence!: BlockStatement;
@@ -83,8 +70,8 @@ export class IfExpression {
     this.token = token;
   }
 
-  expressionNode(): void {
-    console.log('IfExpression expressionNode()');
+  expressionNode(): string {
+    return 'expressionNode';
   }
 
   tokenLiteral(): string {
@@ -92,13 +79,12 @@ export class IfExpression {
   }
 
   string(): string {
-    return `if${this.condition?.string()} ${this.consequence.string()}${
-      this.alternative ? `else ${this.alternative.string()}` : ''
-    }`;
+    return `if${this.condition?.string()} ${this.consequence.string()}${this.alternative ? `else ${this.alternative.string()}` : ''
+      }`;
   }
 }
 
-export class CallExpression {
+export class CallExpression implements Expression{
   token: Token;
   fn!: Expression;
   arguments!: Expression[];
@@ -108,8 +94,8 @@ export class CallExpression {
     this.fn = fn;
   }
 
-  expressionNode(): void {
-    console.log('CallExpression expressionNode()');
+  expressionNode(): string {
+    return 'expressionNode';
   }
 
   tokenLiteral(): string {
@@ -127,7 +113,7 @@ export class CallExpression {
   }
 }
 
-export class IntegerLiteral {
+export class IntegerLiteral implements Expression {
   token: Token;
   value!: number;
 
@@ -135,8 +121,8 @@ export class IntegerLiteral {
     this.token = token;
   }
 
-  expressionNode(): void {
-    console.log('IntegerLiteral expressionNode()');
+  expressionNode(): string {
+    return 'expressionNode';
   }
   tokenLiteral(): string {
     return this.token.literal;
@@ -146,7 +132,7 @@ export class IntegerLiteral {
   }
 }
 
-export class BooleanLiteral {
+export class BooleanLiteral implements Expression{
   token: Token;
   value: boolean;
 
@@ -155,8 +141,8 @@ export class BooleanLiteral {
     this.value = value;
   }
 
-  expressionNode(): void {
-    console.log('BooleanLiteral expressionNode()');
+  expressionNode(): string {
+    return 'expressionNode';
   }
   tokenLiteral(): string {
     return this.token.literal;
@@ -166,7 +152,7 @@ export class BooleanLiteral {
   }
 }
 
-export class FunctionLiteral {
+export class FunctionLiteral implements Expression{
   token: Token;
   parameters!: Identifier[] | null;
   body!: BlockStatement;
@@ -175,8 +161,8 @@ export class FunctionLiteral {
     this.token = token;
   }
 
-  expressionNode(): void {
-    console.log('FunctionLiteral expressionNode()');
+  expressionNode(): string {
+    return 'expressionNode';
   }
   tokenLiteral(): string {
     return this.token.literal;
@@ -194,15 +180,8 @@ export class FunctionLiteral {
 }
 
 // AST root
-export class Program {
-  statements: (
-    | Statement
-    | LetStatement
-    | ReturnStatement
-    | ExpressionStatement
-    | IntegerLiteral
-    | PrefixExpression
-  )[] = [];
+export class Program implements Node {
+  statements: Statement[] = [];
 
   tokenLiteral(): string {
     if (this.statements.length > 0) {
@@ -219,22 +198,42 @@ export class Program {
   }
 }
 
-export class LetStatement extends Statement {
+export class LetStatement implements Statement {
+  token: Token;
   name!: Identifier;
   value!: Expression;
 
+  constructor(token: Token) {
+    this.token = token;
+  }
+  statementNode(): string {
+    return 'statementNode';
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+
   string(): string {
-    return `${this.tokenLiteral()} ${this.name.string()} = ${
-      this.value.string() !== null ? this.value.string() : ''
-    };`;
+    return `${this.tokenLiteral()} ${this.name.string()} = ${this.value.string() !== null ? this.value.string() : ''
+      };`;
   }
 }
 
-export class ReturnStatement extends Statement {
+export class ReturnStatement implements Statement {
+  token: Token;
   _returnValue!: Expression;
 
   constructor(token: Token) {
-    super(token);
+    this.token = token;
+  }
+
+  statementNode(): string {
+    return 'statementNode';;
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
   }
 
   get returnValue(): Expression {
@@ -246,15 +245,26 @@ export class ReturnStatement extends Statement {
   }
 
   string(): string {
-    return `${this.tokenLiteral()} ${
-      this.returnValue ? this.returnValue : ''
-    };`;
+    return `${this.tokenLiteral()} ${this.returnValue ? this.returnValue : ''
+      };`;
   }
 }
 
-export class ExpressionStatement extends Statement {
+export class ExpressionStatement implements Statement {
+  token: Token;
   expression!: Expression | null;
 
+  constructor(token: Token) {
+    this.token = token;
+  }
+
+  statementNode(): string {
+    return 'statementNode';
+  }
+
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
   string(): string {
     if (this.expression !== null) {
       return this.expression.string();
@@ -264,11 +274,16 @@ export class ExpressionStatement extends Statement {
   }
 }
 
-export class BlockStatement extends Statement {
+export class BlockStatement implements Statement {
+  token: Token;
   statements!: Statement[];
 
-  statementNode(): void {
-    console.log('BlockStatement statementNode()');
+  constructor(token: Token) {
+    this.token = token;
+  }
+
+  statementNode(): string {
+    return 'statementNode'; 
   }
 
   tokenLiteral(): string {
@@ -286,7 +301,7 @@ export class BlockStatement extends Statement {
   }
 }
 
-export class Identifier {
+export class Identifier implements Expression {
   token: Token;
   value: string;
 
@@ -295,8 +310,8 @@ export class Identifier {
     this.value = value;
   }
 
-  expressionNode(): void {
-    console.log('Am a dummy method');
+  expressionNode(): string {
+    return 'expressionNode';
   }
 
   tokenLiteral(): string {

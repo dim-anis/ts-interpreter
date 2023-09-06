@@ -1,37 +1,51 @@
-import { Lexer } from "../lexer/lexer";
-import * as readline from "node:readline/promises";
-import { stdin as input, stdout as output } from "node:process";
+import { Lexer } from '../lexer/lexer';
+import * as readline from 'node:readline/promises';
+import { stdin as input, stdout as output } from 'node:process';
+import { Parser } from '../parser/parser';
 
+function printParseErrors(errors: string[]) {
+  const out: string[] = [
+    'Woops, we ran into some problems!',
+    'parser errors:',
+  ];
+
+  for (const err of errors) {
+    out.push(`\t${err}\n`);
+  }
+
+  console.error(out.join('\n')); 
+}
 
 async function main() {
   const rl = readline.createInterface({
     input,
     output,
+    prompt: '>> ',
   });
 
   console.log(`Welcome to TS version of Monkey Language!
 
 Type some legal Monkey statements, 
-but be careful not to launch your machine into an infinite loop as this is a WIP!`)
+but be careful not to launch your machine into an infinite loop as this is a WIP!`);
 
-  rl.setPrompt(">> ");
   rl.prompt();
 
   rl.on('line', async (input) => {
     const l = new Lexer(input);
+    const p = new Parser(l);
+    const program = p.parseProgram();
 
-    while (true) {
-      const token = l.nextToken();
-      console.log(token);
-      if (token.type === '') {
-        break;
-      }
+    if (p.errors().length !== 0) {
+      printParseErrors(p.errors());
     }
+
+    console.log(program.string());
+    rl.prompt();
   });
 
   rl.on('close', () => {
-    console.log('Session ended')
-  })
+    console.log('Session ended');
+  });
 }
 
 main();

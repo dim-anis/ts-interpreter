@@ -1,7 +1,7 @@
-import { BooleanLiteral, ExpressionStatement, InfixExpression, IntegerLiteral, Node, PrefixExpression, Program, Statement } from "../ast/ast";
+import { BlockStatement, BooleanLiteral, ExpressionStatement, IfExpression, InfixExpression, IntegerLiteral, Node, PrefixExpression, Program, Statement } from "../ast/ast";
 import { Boolean, Integer, MonkeyObject, Null, OBJECT_TYPE } from "../object/object";
 
-const NATIVE_TO_OBJ = {
+export const NATIVE_TO_OBJ = {
   TRUE: new Boolean(true),
   FALSE: new Boolean(false),
   NULL: new Null(),
@@ -33,6 +33,10 @@ export function monkeyEval(node: Node): MonkeyObject {
       return new Integer((node as IntegerLiteral).value);
     case node instanceof BooleanLiteral:
       return nativeBoolToBooleanObject((node as BooleanLiteral).value);
+    case node instanceof BlockStatement:
+      return evalStatements((node as BlockStatement).statements);
+    case node instanceof IfExpression:
+      return evalIfExpression((node as IfExpression));
     default:
       return NATIVE_TO_OBJ.NULL;
   }
@@ -74,6 +78,36 @@ function evalInfixExpression(operator: string, left: MonkeyObject, right: Monkey
     }
     default:
       return NATIVE_TO_OBJ.NULL;
+  }
+}
+
+function evalIfExpression(ie: IfExpression): MonkeyObject {
+  const cond = ie.condition;
+  if (!cond) {
+    return NATIVE_TO_OBJ.NULL;
+  }
+
+  const condition = monkeyEval(cond);
+
+  if (isTruthy(condition)) {
+    return monkeyEval(ie.consequence);
+  } else if (ie.alternative !== null) {
+    return monkeyEval(ie.alternative);
+  } else {
+    return NATIVE_TO_OBJ.NULL;
+  }
+}
+
+function isTruthy(obj: MonkeyObject): boolean {
+  switch (obj) {
+    case NATIVE_TO_OBJ.NULL:
+      return false;
+    case NATIVE_TO_OBJ.TRUE:
+      return true;
+    case NATIVE_TO_OBJ.FALSE:
+      return false;
+    default:
+      return true;
   }
 }
 

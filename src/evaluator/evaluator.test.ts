@@ -1,13 +1,15 @@
 import { Lexer } from "../lexer/lexer";
 import { Boolean, Integer, MonkeyObject } from "../object/object";
 import { Parser } from "../parser/parser";
-import { monkeyEval } from "./evaluator";
+import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
+
+type Test<T> = {
+  input: string;
+  expected: T
+}
 
 test('test eval integer expression', () => {
-  const tests: {
-    input: string,
-    expected: number
-  }[] = [
+  const tests: Test<number>[] = [
       {
         input: '5',
         expected: 5
@@ -81,10 +83,7 @@ test('test eval integer expression', () => {
 })
 
 test('test eval boolean expression', () => {
-  const tests: {
-    input: string,
-    expected: boolean
-  }[] = [
+  const tests: Test<boolean>[] = [
       {
         input: 'true',
         expected: true
@@ -166,10 +165,7 @@ test('test eval boolean expression', () => {
 })
 
 test('test bang operator', () => {
-  const tests: {
-    input: string,
-    expected: boolean
-  }[] = [
+  const tests: Test<boolean>[] = [
       {
         input: '!true',
         expected: false
@@ -206,7 +202,57 @@ test('test bang operator', () => {
   }
 })
 
-function testEval(input: string): MonkeyObject | null {
+test('test if/else expressions', () => {
+  const tests: Test<any>[] = [
+      {
+        input: 'if (true) { 10 }',
+        expected: 10
+      },
+      {
+        input: 'if (false) { 10 }',
+        expected: null
+      },
+      {
+        input: 'if (1) { 10 }',
+        expected: 10
+      },
+      {
+        input: 'if (1 < 2) { 10 }',
+        expected: 10
+      },
+      {
+        input: 'if (1 > 2) { 10 }',
+        expected: null
+      },
+      {
+        input: 'if (1 > 2) { 10 } else { 20 }',
+        expected: 20
+      },
+      {
+        input: 'if (1 < 2) { 10 } else { 20 }',
+        expected: 10
+      },
+    ];
+
+  for (const test of tests) {
+    const evaluated = testEval(test.input);
+    const integer = test.expected;
+
+    if (typeof integer === 'number') {
+      testIntegerObject(evaluated, integer);
+    } else {
+      testNullObject(evaluated);
+    }
+  }
+})
+
+function testNullObject(obj: MonkeyObject): boolean {
+  expect(obj).toBe(NATIVE_TO_OBJ.NULL);
+
+  return true;
+}
+
+function testEval(input: string): MonkeyObject {
   const l = new Lexer(input);
   const p = new Parser(l);
   const program = p.parseProgram();

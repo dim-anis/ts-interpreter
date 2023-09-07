@@ -6,6 +6,7 @@ export interface MonkeyObject {
 export const OBJECT_TYPE = {
   INTEGER_OBJ: "INTEGER",
   BOOLEAN_OBJ: "BOOLEAN",
+  RETURN_VALUE_OBJ: "RETURN_VALUE",
   NULL_OBJ: "NULL"
 } as const;
 
@@ -38,6 +39,21 @@ export class Boolean implements MonkeyObject {
   }
   inspect(): string {
     return `${this.value}`;
+  }
+}
+
+export class ReturnValue implements MonkeyObject {
+  value!: MonkeyObject;
+
+  constructor(value: MonkeyObject) {
+    this.value = value;
+  }
+
+  type(): MonkeyObjectType {
+    return OBJECT_TYPE.RETURN_VALUE_OBJ;
+  }
+  inspect(): string {
+    return `${this.value.inspect()}`;
   }
 }
 

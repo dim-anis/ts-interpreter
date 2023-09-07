@@ -1,5 +1,5 @@
-import { BlockStatement, BooleanLiteral, ExpressionStatement, IfExpression, InfixExpression, IntegerLiteral, Node, PrefixExpression, Program, Statement } from "../ast/ast";
-import { Boolean, Integer, MonkeyObject, Null, OBJECT_TYPE } from "../object/object";
+import { BlockStatement, BooleanLiteral, ExpressionStatement, IfExpression, InfixExpression, IntegerLiteral, Node, PrefixExpression, Program, ReturnStatement, Statement } from "../ast/ast";
+import { Boolean, Integer, MonkeyObject, Null, OBJECT_TYPE, ReturnValue } from "../object/object";
 
 export const NATIVE_TO_OBJ = {
   TRUE: new Boolean(true),
@@ -10,7 +10,10 @@ export const NATIVE_TO_OBJ = {
 export function monkeyEval(node: Node): MonkeyObject {
   switch (true) {
     case node instanceof Program:
-      return evalStatements((node as Program).statements);
+      if (node instanceof Program) {
+        return evalProgram(node as Program);
+      }
+      return NATIVE_TO_OBJ.NULL;
     case node instanceof ExpressionStatement:
       if (node instanceof ExpressionStatement && node.expression) {
         return monkeyEval(node.expression);
@@ -34,21 +37,47 @@ export function monkeyEval(node: Node): MonkeyObject {
     case node instanceof BooleanLiteral:
       return nativeBoolToBooleanObject((node as BooleanLiteral).value);
     case node instanceof BlockStatement:
-      return evalStatements((node as BlockStatement).statements);
+      if (node instanceof BlockStatement) {
+        return evalBlockStatement(node);
+      }
+      return NATIVE_TO_OBJ.NULL;
     case node instanceof IfExpression:
       return evalIfExpression((node as IfExpression));
+    case node instanceof ReturnStatement:
+      if (node instanceof ReturnStatement) {
+        const val = monkeyEval(node.returnValue);
+        return new ReturnValue(val);
+      }
+      return NATIVE_TO_OBJ.NULL;
     default:
       return NATIVE_TO_OBJ.NULL;
   }
 }
 
-function evalStatements(stmts: Statement[]): MonkeyObject {
+function evalProgram(program: Program): MonkeyObject {
   let result = {};
 
-  for (const stmt of stmts) {
+  for (const stmt of program.statements) {
     const evaluated = monkeyEval(stmt);
-    if (evaluated) {
-      result = evaluated;
+    result = evaluated;
+
+    if (evaluated instanceof ReturnValue) {
+      return evaluated.value;
+    }
+  }
+
+  return result as MonkeyObject;
+}
+
+function evalBlockStatement(block: BlockStatement): MonkeyObject {
+  let result = {};
+
+  for (const stmt of block.statements) {
+    const evaluated = monkeyEval(stmt);
+    result = evaluated;
+
+    if (evaluated !== null && evaluated.type() === OBJECT_TYPE.RETURN_VALUE_OBJ) {
+      return evaluated;
     }
   }
 

@@ -19,7 +19,7 @@ export class Integer implements MonkeyObject {
   }
 
   type(): MonkeyObjectType {
-    return OBJECT_TYPE.BOOLEAN_OBJ;
+    return OBJECT_TYPE.INTEGER_OBJ;
   }
   inspect(): string {
     return `${this.value}`;
@@ -28,6 +28,10 @@ export class Integer implements MonkeyObject {
 
 export class Boolean implements MonkeyObject {
   value!: boolean;
+
+  constructor(value: boolean) {
+    this.value = value;
+  }
 
   type(): MonkeyObjectType {
     return OBJECT_TYPE.BOOLEAN_OBJ;

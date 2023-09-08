@@ -1,5 +1,5 @@
-import { BlockStatement, BooleanLiteral, ExpressionStatement, IfExpression, InfixExpression, IntegerLiteral, Node, PrefixExpression, Program, ReturnStatement, Statement } from "../ast/ast";
-import { Boolean, Integer, MonkeyObject, Null, OBJECT_TYPE, ReturnValue } from "../object/object";
+import { BlockStatement, BooleanLiteral, ExpressionStatement, IfExpression, InfixExpression, IntegerLiteral, Node, PrefixExpression, Program, ReturnStatement } from "../ast/ast";
+import { Boolean, Error, Integer, MonkeyObject, Null, OBJECT_TYPE, ReturnValue } from "../object/object";
 
 export const NATIVE_TO_OBJ = {
   TRUE: new Boolean(true),
@@ -22,6 +22,9 @@ export function monkeyEval(node: Node): MonkeyObject {
     case node instanceof PrefixExpression:
       if (node instanceof PrefixExpression && node.right) {
         const right = monkeyEval(node.right);
+        if (isError(right)) {
+          return right;
+        }
         return evalPrefixExpression(node.operator, right);
       }
       return NATIVE_TO_OBJ.NULL;
@@ -29,6 +32,12 @@ export function monkeyEval(node: Node): MonkeyObject {
       if (node instanceof InfixExpression && node.right && node.left) {
         const left = monkeyEval(node.left);
         const right = monkeyEval(node.right);
+        if (isError(left)) {
+          return left;
+        }
+        if (isError(right)) {
+          return right;
+        }
         return evalInfixExpression(node.operator, left, right);
       }
       return NATIVE_TO_OBJ.NULL;
@@ -46,6 +55,9 @@ export function monkeyEval(node: Node): MonkeyObject {
     case node instanceof ReturnStatement:
       if (node instanceof ReturnStatement) {
         const val = monkeyEval(node.returnValue);
+        if (isError(val)) {
+          return val;
+        }
         return new ReturnValue(val);
       }
       return NATIVE_TO_OBJ.NULL;
@@ -61,8 +73,16 @@ function evalProgram(program: Program): MonkeyObject {
     const evaluated = monkeyEval(stmt);
     result = evaluated;
 
-    if (evaluated instanceof ReturnValue) {
-      return evaluated.value;
+    switch (true) {
+      case evaluated instanceof ReturnValue:
+        if (evaluated instanceof ReturnValue) {
+          return evaluated.value;
+        }
+        break;
+      case evaluated instanceof Error:
+        if (evaluated instanceof Error) {
+          return evaluated;
+        }
     }
   }
 
@@ -76,8 +96,11 @@ function evalBlockStatement(block: BlockStatement): MonkeyObject {
     const evaluated = monkeyEval(stmt);
     result = evaluated;
 
-    if (evaluated !== null && evaluated.type() === OBJECT_TYPE.RETURN_VALUE_OBJ) {
-      return evaluated;
+    if (evaluated !== null) {
+      const resultType = evaluated.type();
+      if (resultType === OBJECT_TYPE.RETURN_VALUE_OBJ || resultType === OBJECT_TYPE.ERROR_OBJ) {
+        return evaluated;
+      }
     }
   }
 
@@ -91,7 +114,7 @@ function evalPrefixExpression(operator: string, right: MonkeyObject): MonkeyObje
     case '-':
       return evalMinusPrefixOperatorExpression(right);
     default:
-      return NATIVE_TO_OBJ.NULL;
+      return new Error(`unknown operator: ${operator}${right.type()}`);
   }
 }
 
@@ -105,8 +128,10 @@ function evalInfixExpression(operator: string, left: MonkeyObject, right: Monkey
     case operator === '!=': {
       return nativeBoolToBooleanObject(left !== right);
     }
+    case left.type() !== right.type():
+      return new Error(`type mismatch: ${left.type()} ${operator} ${right.type()}`);
     default:
-      return NATIVE_TO_OBJ.NULL;
+      return new Error(`unknown operator: ${left.type()} ${operator} ${right.type()}`);
   }
 }
 
@@ -117,6 +142,10 @@ function evalIfExpression(ie: IfExpression): MonkeyObject {
   }
 
   const condition = monkeyEval(cond);
+
+  if (isError(condition)) {
+    return condition;
+  }
 
   if (isTruthy(condition)) {
     return monkeyEval(ie.consequence);
@@ -140,6 +169,14 @@ function isTruthy(obj: MonkeyObject): boolean {
   }
 }
 
+function isError(obj: MonkeyObject): boolean {
+  if (obj !== null) {
+    return obj.type() === OBJECT_TYPE.ERROR_OBJ;
+  }
+
+  return false;
+}
+
 function evalBangOperatorExpression(right: MonkeyObject): MonkeyObject {
   switch (right) {
     case NATIVE_TO_OBJ.TRUE:
@@ -155,7 +192,7 @@ function evalBangOperatorExpression(right: MonkeyObject): MonkeyObject {
 
 function evalMinusPrefixOperatorExpression(right: MonkeyObject): MonkeyObject {
   if (right.type() !== OBJECT_TYPE.INTEGER_OBJ) {
-    return NATIVE_TO_OBJ.NULL;
+    return new Error(`unknown operator: -${right.type()}`);
   }
 
   const value = (right as Integer).value;
@@ -184,7 +221,7 @@ function evalIntegerInfixExpression(operator: string, left: MonkeyObject, right:
     case '!=':
       return nativeBoolToBooleanObject(leftVal != rightVal);
     default:
-      return NATIVE_TO_OBJ.NULL;
+      return new Error(`unknown operator: ${right.type()} ${operator} ${right.type()}`);
   }
 }
 

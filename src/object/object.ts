@@ -7,6 +7,7 @@ export const OBJECT_TYPE = {
   INTEGER_OBJ: "INTEGER",
   BOOLEAN_OBJ: "BOOLEAN",
   RETURN_VALUE_OBJ: "RETURN_VALUE",
+  ERROR_OBJ: "ERROR",
   NULL_OBJ: "NULL"
 } as const;
 
@@ -54,6 +55,22 @@ export class ReturnValue implements MonkeyObject {
   }
   inspect(): string {
     return `${this.value.inspect()}`;
+  }
+}
+
+export class Error implements MonkeyObject {
+  message: string;
+
+  constructor(message: string) {
+    this.message = message;
+  }
+
+  type(): MonkeyObjectType {
+    return OBJECT_TYPE.ERROR_OBJ;
+  }
+
+  inspect(): string {
+    return `ERROR: ${this.message}`;
   }
 }
 

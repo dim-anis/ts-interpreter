@@ -1,5 +1,5 @@
 import { Lexer } from "../lexer/lexer";
-import { Boolean, Integer, MonkeyObject } from "../object/object";
+import { Boolean, Error, Integer, MonkeyObject } from "../object/object";
 import { Parser } from "../parser/parser";
 import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
 
@@ -269,6 +269,57 @@ test('test return statements', () => {
   for (const test of tests) {
     const evaluated = testEval(test.input);
     testIntegerObject(evaluated, test.expected);
+  }
+})
+
+test('test error handling', () => {
+  const tests: Test<string>[] = [
+    {
+      input: '5 + true;',
+      expected: 'type mismatch: INTEGER + BOOLEAN',
+    },
+    {
+      input: '5 + true; 5',
+      expected: 'type mismatch: INTEGER + BOOLEAN',
+    },
+    {
+      input: '-true',
+      expected: 'unknown operator: -BOOLEAN',
+    },
+    {
+      input: 'true + false;',
+      expected: 'unknown operator: BOOLEAN + BOOLEAN',
+    },
+    {
+      input: '5; true + false; 5',
+      expected: 'unknown operator: BOOLEAN + BOOLEAN',
+    },
+    {
+      input: 'if (10 > 1) { true + false; }',
+      expected: 'unknown operator: BOOLEAN + BOOLEAN',
+    },
+    {
+      input: `
+if (10 > 1) {
+  if (10 > 1) {
+    return true + false;
+  }
+
+return 1;
+}
+`,
+      expected: 'unknown operator: BOOLEAN + BOOLEAN',
+    },
+  ];
+
+  for (const test of tests) {
+    const evaluated = testEval(test.input);
+
+    expect(evaluated).toBeInstanceOf(Error);
+
+    if (evaluated instanceof Error) {
+      expect(evaluated.message).toBe(test.expected);
+    }
   }
 })
 

@@ -1,5 +1,5 @@
 import { Lexer } from "../lexer/lexer";
-import { Boolean, Error, Integer, MonkeyObject } from "../object/object";
+import { Boolean, Environment, Error, Integer, MonkeyObject, newEnvironment } from "../object/object";
 import { Parser } from "../parser/parser";
 import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
 
@@ -310,6 +310,10 @@ return 1;
 `,
       expected: 'unknown operator: BOOLEAN + BOOLEAN',
     },
+    {
+      input: 'foobar',
+      expected: 'identifier not found: foobar',
+    },
   ];
 
   for (const test of tests) {
@@ -323,6 +327,31 @@ return 1;
   }
 })
 
+test('test let statements', () => {
+  const tests: Test<number>[] = [
+    {
+      input: 'let a = 5; a;',
+      expected: 5
+    },
+    {
+      input: 'let a = 5 * 5; a;',
+      expected: 25
+    },
+    {
+      input: 'let a = 5 let b = a; b;',
+      expected: 5
+    },
+    {
+      input: 'let a = 5; let b = a; let c = a + b + 5; c;',
+      expected: 15
+    },
+  ];
+
+  for (const test of tests) {
+    testIntegerObject(testEval(test.input), test.expected);
+  }
+})
+
 function testNullObject(obj: MonkeyObject): boolean {
   expect(obj).toBe(NATIVE_TO_OBJ.NULL);
 
@@ -333,8 +362,9 @@ function testEval(input: string): MonkeyObject {
   const l = new Lexer(input);
   const p = new Parser(l);
   const program = p.parseProgram();
+  const env = newEnvironment();
 
-  return monkeyEval(program);
+  return monkeyEval(program, env);
 }
 
 function testIntegerObject(obj: MonkeyObject, expected: number) {

@@ -1,5 +1,5 @@
-import { BlockStatement, BooleanLiteral, ExpressionStatement, IfExpression, InfixExpression, IntegerLiteral, Node, PrefixExpression, Program, ReturnStatement } from "../ast/ast";
-import { Boolean, Error, Integer, MonkeyObject, Null, OBJECT_TYPE, ReturnValue } from "../object/object";
+import { BlockStatement, BooleanLiteral, ExpressionStatement, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement } from "../ast/ast";
+import { Boolean, Environment, Error, Integer, MonkeyObject, Null, OBJECT_TYPE, ReturnValue } from "../object/object";
 
 export const NATIVE_TO_OBJ = {
   TRUE: new Boolean(true),
@@ -7,21 +7,18 @@ export const NATIVE_TO_OBJ = {
   NULL: new Null(),
 }
 
-export function monkeyEval(node: Node): MonkeyObject {
+export function monkeyEval(node: Node, env: Environment): MonkeyObject {
   switch (true) {
     case node instanceof Program:
-      if (node instanceof Program) {
-        return evalProgram(node as Program);
-      }
-      return NATIVE_TO_OBJ.NULL;
+      return evalProgram(node as Program, env);
     case node instanceof ExpressionStatement:
       if (node instanceof ExpressionStatement && node.expression) {
-        return monkeyEval(node.expression);
+        return monkeyEval(node.expression, env);
       }
       return NATIVE_TO_OBJ.NULL;
     case node instanceof PrefixExpression:
       if (node instanceof PrefixExpression && node.right) {
-        const right = monkeyEval(node.right);
+        const right = monkeyEval(node.right, env);
         if (isError(right)) {
           return right;
         }
@@ -30,8 +27,8 @@ export function monkeyEval(node: Node): MonkeyObject {
       return NATIVE_TO_OBJ.NULL;
     case node instanceof InfixExpression:
       if (node instanceof InfixExpression && node.right && node.left) {
-        const left = monkeyEval(node.left);
-        const right = monkeyEval(node.right);
+        const left = monkeyEval(node.left, env);
+        const right = monkeyEval(node.right, env);
         if (isError(left)) {
           return left;
         }
@@ -46,31 +43,37 @@ export function monkeyEval(node: Node): MonkeyObject {
     case node instanceof BooleanLiteral:
       return nativeBoolToBooleanObject((node as BooleanLiteral).value);
     case node instanceof BlockStatement:
-      if (node instanceof BlockStatement) {
-        return evalBlockStatement(node);
+      return evalBlockStatement(node as BlockStatement, env);
+    case node instanceof LetStatement: {
+      const val = monkeyEval((node as LetStatement).value, env);
+      if (isError(val)) {
+        return val;
       }
+
+      env.set((node as LetStatement).name.value, val);
       return NATIVE_TO_OBJ.NULL;
+    }
     case node instanceof IfExpression:
-      return evalIfExpression((node as IfExpression));
-    case node instanceof ReturnStatement:
-      if (node instanceof ReturnStatement) {
-        const val = monkeyEval(node.returnValue);
-        if (isError(val)) {
-          return val;
-        }
-        return new ReturnValue(val);
+      return evalIfExpression((node as IfExpression), env);
+    case node instanceof ReturnStatement: {
+      const val = monkeyEval((node as ReturnStatement).returnValue, env);
+      if (isError(val)) {
+        return val;
       }
-      return NATIVE_TO_OBJ.NULL;
+      return new ReturnValue(val);
+    }
+    case node instanceof Identifier:
+      return evalIdentifier(node as Identifier, env);
     default:
       return NATIVE_TO_OBJ.NULL;
   }
 }
 
-function evalProgram(program: Program): MonkeyObject {
+function evalProgram(program: Program, env: Environment): MonkeyObject {
   let result = {};
 
   for (const stmt of program.statements) {
-    const evaluated = monkeyEval(stmt);
+    const evaluated = monkeyEval(stmt, env);
     result = evaluated;
 
     switch (true) {
@@ -89,11 +92,11 @@ function evalProgram(program: Program): MonkeyObject {
   return result as MonkeyObject;
 }
 
-function evalBlockStatement(block: BlockStatement): MonkeyObject {
+function evalBlockStatement(block: BlockStatement, env: Environment): MonkeyObject {
   let result = {};
 
   for (const stmt of block.statements) {
-    const evaluated = monkeyEval(stmt);
+    const evaluated = monkeyEval(stmt, env);
     result = evaluated;
 
     if (evaluated !== null) {
@@ -135,22 +138,32 @@ function evalInfixExpression(operator: string, left: MonkeyObject, right: Monkey
   }
 }
 
-function evalIfExpression(ie: IfExpression): MonkeyObject {
+function evalIdentifier(node: Identifier, env: Environment): MonkeyObject {
+  const val = env.get(node.value);
+
+  if (!val) {
+    return new Error(`identifier not found: ${node.value}`)
+  }
+
+  return val;
+}
+
+function evalIfExpression(ie: IfExpression, env: Environment): MonkeyObject {
   const cond = ie.condition;
   if (!cond) {
     return NATIVE_TO_OBJ.NULL;
   }
 
-  const condition = monkeyEval(cond);
+  const condition = monkeyEval(cond, env);
 
   if (isError(condition)) {
     return condition;
   }
 
   if (isTruthy(condition)) {
-    return monkeyEval(ie.consequence);
+    return monkeyEval(ie.consequence, env);
   } else if (ie.alternative !== null) {
-    return monkeyEval(ie.alternative);
+    return monkeyEval(ie.alternative, env);
   } else {
     return NATIVE_TO_OBJ.NULL;
   }

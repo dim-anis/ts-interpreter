@@ -3,6 +3,7 @@ import * as readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { Parser } from '../parser/parser';
 import { monkeyEval } from '../evaluator/evaluator';
+import { newEnvironment } from '../object/object';
 
 function printParseErrors(errors: string[]) {
   const out: string[] = [
@@ -14,7 +15,7 @@ function printParseErrors(errors: string[]) {
     out.push(`\t${err}\n`);
   }
 
-  console.error(out.join('\n')); 
+  console.error(out.join('\n'));
 }
 
 async function main() {
@@ -31,6 +32,8 @@ but be careful not to launch your machine into an infinite loop as this is a WIP
 
   rl.prompt();
 
+  const env = newEnvironment();
+
   rl.on('line', async (input) => {
     const l = new Lexer(input);
     const p = new Parser(l);
@@ -40,7 +43,7 @@ but be careful not to launch your machine into an infinite loop as this is a WIP
       printParseErrors(p.errors());
     }
 
-    const evaluated = monkeyEval(program);
+    const evaluated = monkeyEval(program, env);
     if (evaluated !== null) {
       console.log(`${evaluated.inspect()}\n`);
     }

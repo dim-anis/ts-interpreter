@@ -82,3 +82,25 @@ export class Null implements MonkeyObject {
     return 'null';
   }
 }
+
+export class Environment {
+  store: Map<string, MonkeyObject>;
+
+  constructor(store: Map<string, MonkeyObject>) {
+    this.store = store;
+  }
+
+  get(name: string): MonkeyObject | undefined {
+    return this.store.get(name);
+  }
+
+  set(name: string, val: MonkeyObject): MonkeyObject {
+    this.store.set(name, val);
+    return val;
+  }
+}
+
+export function newEnvironment(): Environment {
+  const s = new Map<string, MonkeyObject>();
+  return new Environment(s);
+}

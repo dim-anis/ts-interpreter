@@ -51,7 +51,7 @@ export function monkeyEval(node: Node, env: Environment): MonkeyObject {
       }
 
       env.set((node as LetStatement).name.value, val);
-      return NATIVE_TO_OBJ.NULL;
+      return val;
     }
     case node instanceof IfExpression:
       return evalIfExpression((node as IfExpression), env);

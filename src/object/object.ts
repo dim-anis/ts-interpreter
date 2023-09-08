@@ -1,3 +1,5 @@
+import { BlockStatement, Identifier } from "../ast/ast";
+
 export interface MonkeyObject {
   type(): MonkeyObjectType;
   inspect(): string;
@@ -7,6 +9,7 @@ export const OBJECT_TYPE = {
   INTEGER_OBJ: "INTEGER",
   BOOLEAN_OBJ: "BOOLEAN",
   RETURN_VALUE_OBJ: "RETURN_VALUE",
+  FUNCTION_OBJ: "FUNCTION",
   ERROR_OBJ: "ERROR",
   NULL_OBJ: "NULL"
 } as const;
@@ -40,6 +43,31 @@ export class Boolean implements MonkeyObject {
   }
   inspect(): string {
     return `${this.value}`;
+  }
+}
+
+export class MonkeyFunction {
+  parameters: Identifier[];
+  body: BlockStatement;
+  env: Environment;
+
+  constructor(parameters: Identifier[], body: BlockStatement, env: Environment) {
+    this.parameters = parameters;
+    this.body = body;
+    this.env = env;
+  }
+
+  type(): MonkeyObjectType {
+    return OBJECT_TYPE.FUNCTION_OBJ;
+  }
+
+  inspect(): string {
+    const params: string[] = [];
+    for (const param of this.parameters) {
+      params.push(param.string());
+    }
+
+    return `fn(${params.join(', ')})\n${this.body.string()}\n`;
   }
 }
 
@@ -85,13 +113,19 @@ export class Null implements MonkeyObject {
 
 export class Environment {
   store: Map<string, MonkeyObject>;
+  outer?: Environment;
 
   constructor(store: Map<string, MonkeyObject>) {
     this.store = store;
   }
 
   get(name: string): MonkeyObject | undefined {
-    return this.store.get(name);
+    let obj = this.store.get(name);
+    if (obj === undefined && this.outer !== undefined) {
+      obj = this.outer?.get(name);
+    }
+
+    return obj;
   }
 
   set(name: string, val: MonkeyObject): MonkeyObject {
@@ -103,4 +137,11 @@ export class Environment {
 export function newEnvironment(): Environment {
   const s = new Map<string, MonkeyObject>();
   return new Environment(s);
+}
+
+export function newEnclosedEnvironment(outer: Environment): Environment {
+  const env = newEnvironment();
+  env.outer = outer;
+
+  return env;
 }

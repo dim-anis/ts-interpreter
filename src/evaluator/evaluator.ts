@@ -1,5 +1,5 @@
-import { BlockStatement, BooleanLiteral, ExpressionStatement, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement } from "../ast/ast";
-import { Boolean, Environment, Error, Integer, MonkeyObject, Null, OBJECT_TYPE, ReturnValue } from "../object/object";
+import { BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement } from "../ast/ast";
+import { Boolean, Environment, Error, MonkeyFunction, Integer, MonkeyObject, MonkeyObjectType, Null, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment } from "../object/object";
 
 export const NATIVE_TO_OBJ = {
   TRUE: new Boolean(true),
@@ -38,6 +38,24 @@ export function monkeyEval(node: Node, env: Environment): MonkeyObject {
         return evalInfixExpression(node.operator, left, right);
       }
       return NATIVE_TO_OBJ.NULL;
+    case node instanceof FunctionLiteral: {
+      const { parameters, body } = node as FunctionLiteral;
+      return new MonkeyFunction(parameters || [], body, env);
+    }
+    case node instanceof CallExpression: {
+      const fn = monkeyEval((node as CallExpression).fn, env);
+      if (isError(fn)) {
+        return fn;
+      }
+
+      const args = evalExpressions((node as CallExpression).arguments, env);
+
+      if (args.length === 1 && isError(args[0])) {
+        return args[0];
+      }
+
+      return applyFunction(fn, args);
+    }
     case node instanceof IntegerLiteral:
       return new Integer((node as IntegerLiteral).value);
     case node instanceof BooleanLiteral:
@@ -108,6 +126,22 @@ function evalBlockStatement(block: BlockStatement, env: Environment): MonkeyObje
   }
 
   return result as MonkeyObject;
+}
+
+function evalExpressions(exps: Expression[], env: Environment): MonkeyObject[] {
+  const result: MonkeyObject[] = [];
+
+  for (const exp of exps) {
+    const evaluated = monkeyEval(exp, env);
+
+    if (isError(evaluated)) {
+      return [evaluated];
+    }
+
+    result.push(evaluated);
+  }
+
+  return result;
 }
 
 function evalPrefixExpression(operator: string, right: MonkeyObject): MonkeyObject {
@@ -244,4 +278,33 @@ function nativeBoolToBooleanObject(input: boolean): MonkeyObject {
   }
 
   return NATIVE_TO_OBJ.FALSE;
+}
+
+function applyFunction(fn: MonkeyObject, args: MonkeyObject[]): MonkeyObject {
+  if (!(fn instanceof MonkeyFunction)) {
+    return new Error(`not a function: ${fn.type}`);
+  }
+
+  const extendedEnv = extendedFunctionEnv(fn, args);
+  const evaluated = monkeyEval(fn.body, extendedEnv);
+
+  return unwrapedReturnValue(evaluated);
+}
+
+function extendedFunctionEnv(fn: MonkeyFunction, args: MonkeyObject[]): Environment {
+  const env = newEnclosedEnvironment(fn.env);
+
+  for (const [paramIdx, param] of fn.parameters.entries()) {
+    env.set(param.value, args[Number(paramIdx)]);
+  }
+
+  return env;
+}
+
+function unwrapedReturnValue(obj: MonkeyObject): MonkeyObject {
+  if (obj instanceof ReturnValue) {
+    return obj.value;
+  }
+
+  return obj;
 }

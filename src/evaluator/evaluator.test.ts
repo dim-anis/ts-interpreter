@@ -1,5 +1,5 @@
 import { Lexer } from "../lexer/lexer";
-import { Boolean, Environment, Error, Integer, MonkeyObject, newEnvironment } from "../object/object";
+import { Boolean, Environment, Error, MonkeyFunction, Integer, MonkeyObject, newEnvironment } from "../object/object";
 import { Parser } from "../parser/parser";
 import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
 
@@ -344,6 +344,53 @@ test('test let statements', () => {
     {
       input: 'let a = 5; let b = a; let c = a + b + 5; c;',
       expected: 15
+    },
+  ];
+
+  for (const test of tests) {
+    testIntegerObject(testEval(test.input), test.expected);
+  }
+})
+
+test('test function object', () => {
+  const input = 'fn(x) { x + 2};';
+
+  const evaluated = testEval(input);
+
+  expect(evaluated).toBeInstanceOf(MonkeyFunction);
+
+  if (evaluated instanceof MonkeyFunction) {
+    expect(evaluated.parameters.length).toBe(1);
+    expect(evaluated.parameters[0].string()).toBe('x');
+    expect(evaluated.body.string()).toBe('(x + 2)');
+  }
+})
+
+test('test function application', () => {
+  const tests: Test<number>[] = [
+    {
+      input: 'let identity = fn(x) { x; }; identity(5);',
+      expected: 5
+    },
+    {
+      input: 'let identity = fn(x) { return x; }; identity(5);',
+      expected: 5
+    },
+    {
+      input: 'let double = fn(x) { x * 2; }; double(5);',
+      expected: 10
+    },
+    {
+      input: 'let add = fn(x, y) { x + y; }; add(5, 5);',
+      expected: 10
+    },
+    {
+      input: 'let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));',
+      expected: 20
+    },
+    {
+      input: 'fn(x) { x; }(5)',
+      expected: 5
     },
   ];
 

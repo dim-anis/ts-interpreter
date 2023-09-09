@@ -1,5 +1,5 @@
 import { BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement } from "../ast/ast";
-import { Boolean, Environment, Error, MonkeyFunction, Integer, MonkeyObject, MonkeyObjectType, Null, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment } from "../object/object";
+import { Boolean, Environment, Error, MonkeyFunction, Integer, MonkeyObject, Null, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment } from "../object/object";
 
 export const NATIVE_TO_OBJ = {
   TRUE: new Boolean(true),
@@ -295,7 +295,7 @@ function extendedFunctionEnv(fn: MonkeyFunction, args: MonkeyObject[]): Environm
   const env = newEnclosedEnvironment(fn.env);
 
   for (const [paramIdx, param] of fn.parameters.entries()) {
-    env.set(param.value, args[Number(paramIdx)]);
+    env.set(param.value, args[paramIdx]);
   }
 
   return env;

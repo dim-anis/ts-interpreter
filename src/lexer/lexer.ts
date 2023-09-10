@@ -72,6 +72,18 @@ export class Lexer {
     return this.input.slice(startPosition, this.position);
   }
 
+  private readString(): string {
+    const position = this.position + 1;
+    while (true) {
+      this.readChar();
+      if (this.ch === '"' || this.ch === '\0') {
+        break;
+      }
+    }
+
+    return this.input.slice(position, this.position);
+  }
+
   nextToken(): Token {
     let tok: Token;
 
@@ -136,6 +148,9 @@ export class Lexer {
         break;
       case '\0':
         tok = createNewToken(TokenType.EOF, '');
+        break;
+      case '"':
+        tok = createNewToken(TokenType.STRING, this.readString());
         break;
       default:
         if (isLetter(this.ch)) {

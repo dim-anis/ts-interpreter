@@ -31,6 +31,8 @@ export const TokenType = {
   ELSE: "ELSE",
   RETURN: "RETURN",
 
+  STRING: "STRING",
+
   EQ: "==",
   NOT_EQ: "!=",
 } as const;

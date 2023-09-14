@@ -13,7 +13,7 @@ export interface Expression extends Node {
   expressionNode(): string
 }
 
-export class PrefixExpression implements Expression{
+export class PrefixExpression implements Expression {
   token: Token;
   operator: string;
   right!: Expression | null;
@@ -36,7 +36,7 @@ export class PrefixExpression implements Expression{
   }
 }
 
-export class InfixExpression implements Expression{
+export class InfixExpression implements Expression {
   token: Token;
   left!: Expression | null;
   operator: string;
@@ -60,7 +60,7 @@ export class InfixExpression implements Expression{
   }
 }
 
-export class IfExpression implements Expression{
+export class IfExpression implements Expression {
   token: Token;
   condition!: Expression | null;
   consequence!: BlockStatement;
@@ -84,7 +84,7 @@ export class IfExpression implements Expression{
   }
 }
 
-export class CallExpression implements Expression{
+export class CallExpression implements Expression {
   token: Token;
   fn!: Expression;
   arguments!: Expression[];
@@ -132,7 +132,27 @@ export class IntegerLiteral implements Expression {
   }
 }
 
-export class BooleanLiteral implements Expression{
+export class StringLiteral implements Expression {
+  token: Token;
+  value: string;
+
+  constructor(token: Token, value: string) {
+    this.token = token;
+    this.value = value;
+  }
+
+  expressionNode(): string {
+    return 'expressionNode';
+  }
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  string(): string {
+    return this.token.literal;
+  }
+}
+
+export class BooleanLiteral implements Expression {
   token: Token;
   value: boolean;
 
@@ -152,7 +172,7 @@ export class BooleanLiteral implements Expression{
   }
 }
 
-export class FunctionLiteral implements Expression{
+export class FunctionLiteral implements Expression {
   token: Token;
   parameters!: Identifier[] | null;
   body!: BlockStatement;
@@ -283,7 +303,7 @@ export class BlockStatement implements Statement {
   }
 
   statementNode(): string {
-    return 'statementNode'; 
+    return 'statementNode';
   }
 
   tokenLiteral(): string {

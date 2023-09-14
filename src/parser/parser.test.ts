@@ -14,6 +14,7 @@ import {
   PrefixExpression,
   ReturnStatement,
   Statement,
+  StringLiteral,
 } from '../ast/ast';
 
 test('test let statements', () => {
@@ -634,6 +635,27 @@ test('test call expression parsing', () => {
 // test('test call expression parameter parsing', () => {
 //
 // });
+
+test('test string literal expression', () => {
+  const input = '"hello world";';
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  const stmt = program.statements[0];
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+  if (stmt instanceof ExpressionStatement) {
+    const literal = stmt.expression;
+    expect(literal).toBeInstanceOf(StringLiteral);
+    if (literal instanceof StringLiteral) {
+      expect(literal.value).toBe('hello world');
+    }
+  }
+});
 
 function checkParserErrors(p: Parser) {
   const errors = p._errors;

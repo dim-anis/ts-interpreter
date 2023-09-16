@@ -7,6 +7,7 @@ export interface MonkeyObject {
 
 export const OBJECT_TYPE = {
   INTEGER_OBJ: "INTEGER",
+  STRING_OBJ: "STRING",
   BOOLEAN_OBJ: "BOOLEAN",
   RETURN_VALUE_OBJ: "RETURN_VALUE",
   FUNCTION_OBJ: "FUNCTION",
@@ -17,7 +18,7 @@ export const OBJECT_TYPE = {
 export type MonkeyObjectType = typeof OBJECT_TYPE[keyof typeof OBJECT_TYPE];
 
 export class Integer implements MonkeyObject {
-  value!: number;
+  value: number;
 
   constructor(value: number) {
     this.value = value;
@@ -25,6 +26,21 @@ export class Integer implements MonkeyObject {
 
   type(): MonkeyObjectType {
     return OBJECT_TYPE.INTEGER_OBJ;
+  }
+  inspect(): string {
+    return `${this.value}`;
+  }
+}
+
+export class Str implements MonkeyObject {
+  value: string;
+
+  constructor(value: string) {
+    this.value = value;
+  }
+
+  type(): MonkeyObjectType {
+    return OBJECT_TYPE.STRING_OBJ;
   }
   inspect(): string {
     return `${this.value}`;

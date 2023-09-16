@@ -1,5 +1,5 @@
-import { BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement } from "../ast/ast";
-import { Boolean, Environment, Error, MonkeyFunction, Integer, MonkeyObject, Null, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment } from "../object/object";
+import { BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, StringLiteral } from "../ast/ast";
+import { Boolean, Environment, Error, MonkeyFunction, Integer, MonkeyObject, Null, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, Str } from "../object/object";
 
 export const NATIVE_TO_OBJ = {
   TRUE: new Boolean(true),
@@ -58,6 +58,8 @@ export function monkeyEval(node: Node, env: Environment): MonkeyObject {
     }
     case node instanceof IntegerLiteral:
       return new Integer((node as IntegerLiteral).value);
+    case node instanceof StringLiteral:
+      return new Str((node as StringLiteral).value);
     case node instanceof BooleanLiteral:
       return nativeBoolToBooleanObject((node as BooleanLiteral).value);
     case node instanceof BlockStatement:
@@ -159,6 +161,8 @@ function evalInfixExpression(operator: string, left: MonkeyObject, right: Monkey
   switch (true) {
     case (left.type() === OBJECT_TYPE.INTEGER_OBJ) && (right.type() === OBJECT_TYPE.INTEGER_OBJ):
       return evalIntegerInfixExpression(operator, left, right);
+    case (left.type() === OBJECT_TYPE.STRING_OBJ) && (right.type() === OBJECT_TYPE.STRING_OBJ):
+      return evalStringInfixExpression(operator, left, right);
     case operator === '==': {
       return nativeBoolToBooleanObject(left === right);
     }
@@ -270,6 +274,17 @@ function evalIntegerInfixExpression(operator: string, left: MonkeyObject, right:
     default:
       return new Error(`unknown operator: ${right.type()} ${operator} ${right.type()}`);
   }
+}
+
+function evalStringInfixExpression(operator: string, left: MonkeyObject, right: MonkeyObject): MonkeyObject {
+  if (operator !== '+') {
+    return new Error(`unknown operator: ${left.type()} ${operator} ${right.type()}`);
+  }
+
+  const leftVal = (left as Str).value;
+  const rightVal = (right as Str).value;
+
+  return new Str(leftVal + rightVal);
 }
 
 function nativeBoolToBooleanObject(input: boolean): MonkeyObject {

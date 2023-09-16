@@ -1,5 +1,5 @@
 import { Lexer } from "../lexer/lexer";
-import { Boolean, Environment, Error, MonkeyFunction, Integer, MonkeyObject, newEnvironment } from "../object/object";
+import { Boolean, Error, MonkeyFunction, Integer, MonkeyObject, newEnvironment, Str } from "../object/object";
 import { Parser } from "../parser/parser";
 import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
 
@@ -314,6 +314,10 @@ return 1;
       input: 'foobar',
       expected: 'identifier not found: foobar',
     },
+    {
+      input: '"Hello" - "World!"',
+      expected: 'unknown operator: STRING - STRING'
+    }
   ];
 
   for (const test of tests) {
@@ -396,6 +400,32 @@ test('test function application', () => {
 
   for (const test of tests) {
     testIntegerObject(testEval(test.input), test.expected);
+  }
+})
+
+test('test string literal', () => {
+  const input = '"Hello World!"';
+
+  const evaluated = testEval(input);
+  const str = evaluated;
+
+  expect(str).toBeInstanceOf(Str);
+
+  if (str instanceof Str) {
+    expect(str.value).toBe("Hello World!");
+  }
+})
+
+test('test string concatenation', () => {
+  const input = '"Hello" + " " + "World!"';
+
+  const evaluated = testEval(input);
+  const str = evaluated;
+
+  expect(str).toBeInstanceOf(Str);
+
+  if (str instanceof Str) {
+    expect(str.value).toBe("Hello World!");
   }
 })
 

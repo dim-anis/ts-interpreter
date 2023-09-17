@@ -11,6 +11,7 @@ export const OBJECT_TYPE = {
   BOOLEAN_OBJ: "BOOLEAN",
   RETURN_VALUE_OBJ: "RETURN_VALUE",
   FUNCTION_OBJ: "FUNCTION",
+  BUILTIN_OBJ: "BUILTIN",
   ERROR_OBJ: "ERROR",
   NULL_OBJ: "NULL"
 } as const;
@@ -32,7 +33,7 @@ export class Integer implements MonkeyObject {
   }
 }
 
-export class Str implements MonkeyObject {
+export class MonkeyString implements MonkeyObject {
   value: string;
 
   constructor(value: string) {
@@ -87,6 +88,29 @@ export class MonkeyFunction {
   }
 }
 
+export class BuiltinFunction {
+}
+
+
+export interface BuiltinFunction {
+  (args: MonkeyObject[]): MonkeyObject;
+}
+
+export class Builtin {
+  fn: BuiltinFunction;
+
+  constructor(fn: BuiltinFunction) {
+    this.fn = fn;
+  }
+
+  type(): MonkeyObjectType {
+    return OBJECT_TYPE.BUILTIN_OBJ;
+  }
+  inspect(): string {
+    return 'builtin function';
+  }
+}
+
 export class ReturnValue implements MonkeyObject {
   value!: MonkeyObject;
 
@@ -102,7 +126,7 @@ export class ReturnValue implements MonkeyObject {
   }
 }
 
-export class Error implements MonkeyObject {
+export class Err implements MonkeyObject {
   message: string;
 
   constructor(message: string) {
@@ -118,7 +142,7 @@ export class Error implements MonkeyObject {
   }
 }
 
-export class Null implements MonkeyObject {
+export class MonkeyNull implements MonkeyObject {
   type(): MonkeyObjectType {
     return OBJECT_TYPE.NULL_OBJ;
   }

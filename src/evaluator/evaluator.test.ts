@@ -1,5 +1,5 @@
 import { Lexer } from "../lexer/lexer";
-import { Boolean, Error, MonkeyFunction, Integer, MonkeyObject, newEnvironment, Str } from "../object/object";
+import { Boolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString } from "../object/object";
 import { Parser } from "../parser/parser";
 import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
 
@@ -323,9 +323,9 @@ return 1;
   for (const test of tests) {
     const evaluated = testEval(test.input);
 
-    expect(evaluated).toBeInstanceOf(Error);
+    expect(evaluated).toBeInstanceOf(Err);
 
-    if (evaluated instanceof Error) {
+    if (evaluated instanceof Err) {
       expect(evaluated.message).toBe(test.expected);
     }
   }
@@ -409,9 +409,9 @@ test('test string literal', () => {
   const evaluated = testEval(input);
   const str = evaluated;
 
-  expect(str).toBeInstanceOf(Str);
+  expect(str).toBeInstanceOf(MonkeyString);
 
-  if (str instanceof Str) {
+  if (str instanceof MonkeyString) {
     expect(str.value).toBe("Hello World!");
   }
 })
@@ -422,12 +422,56 @@ test('test string concatenation', () => {
   const evaluated = testEval(input);
   const str = evaluated;
 
-  expect(str).toBeInstanceOf(Str);
+  expect(str).toBeInstanceOf(MonkeyString);
 
-  if (str instanceof Str) {
+  if (str instanceof MonkeyString) {
     expect(str.value).toBe("Hello World!");
   }
 })
+
+test('test builtin functions', () => {
+  const tests: Test<any>[] = [
+    {
+      input: 'len("")',
+      expected: 0
+    },
+    {
+      input: 'len("four")',
+      expected: 4
+    },
+    {
+      input: 'len("hello world")',
+      expected: 11
+    },
+    {
+      input: 'len(1)',
+      expected: 'argument to "len" not supported, got INTEGER'
+    },
+    {
+      input: 'len("one", "two")',
+      expected: 'wrong number of arguments. got=2, want=1'
+    },
+  ]
+
+  for (const test of tests) {
+    const evaluated = testEval(test.input);
+
+    switch (true) {
+      case (typeof test.expected === 'number'): {
+        expect(testIntegerObject(evaluated, Number(test.expected))).toBe(true);
+        break;
+      }
+      case (typeof test.expected === 'string'): {
+        const errOjb = evaluated;
+        expect(errOjb).toBeInstanceOf(Err);
+
+        if (errOjb instanceof Err) {
+          expect(errOjb.message).toBe(test.expected);
+        }
+      }
+    }
+  }
+});
 
 function testNullObject(obj: MonkeyObject): boolean {
   expect(obj).toBe(NATIVE_TO_OBJ.NULL);

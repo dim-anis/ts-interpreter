@@ -1,10 +1,11 @@
 import { BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, StringLiteral } from "../ast/ast";
-import { Boolean, Environment, Error, MonkeyFunction, Integer, MonkeyObject, Null, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, Str } from "../object/object";
+import { Boolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin } from "../object/object";
+import builtins from "./builtins";
 
 export const NATIVE_TO_OBJ = {
   TRUE: new Boolean(true),
   FALSE: new Boolean(false),
-  NULL: new Null(),
+  NULL: new MonkeyNull(),
 }
 
 export function monkeyEval(node: Node, env: Environment): MonkeyObject {
@@ -59,7 +60,7 @@ export function monkeyEval(node: Node, env: Environment): MonkeyObject {
     case node instanceof IntegerLiteral:
       return new Integer((node as IntegerLiteral).value);
     case node instanceof StringLiteral:
-      return new Str((node as StringLiteral).value);
+      return new MonkeyString((node as StringLiteral).value);
     case node instanceof BooleanLiteral:
       return nativeBoolToBooleanObject((node as BooleanLiteral).value);
     case node instanceof BlockStatement:
@@ -102,8 +103,8 @@ function evalProgram(program: Program, env: Environment): MonkeyObject {
           return evaluated.value;
         }
         break;
-      case evaluated instanceof Error:
-        if (evaluated instanceof Error) {
+      case evaluated instanceof Err:
+        if (evaluated instanceof Err) {
           return evaluated;
         }
     }
@@ -153,7 +154,7 @@ function evalPrefixExpression(operator: string, right: MonkeyObject): MonkeyObje
     case '-':
       return evalMinusPrefixOperatorExpression(right);
     default:
-      return new Error(`unknown operator: ${operator}${right.type()}`);
+      return new Err(`unknown operator: ${operator}${right.type()}`);
   }
 }
 
@@ -170,20 +171,25 @@ function evalInfixExpression(operator: string, left: MonkeyObject, right: Monkey
       return nativeBoolToBooleanObject(left !== right);
     }
     case left.type() !== right.type():
-      return new Error(`type mismatch: ${left.type()} ${operator} ${right.type()}`);
+      return new Err(`type mismatch: ${left.type()} ${operator} ${right.type()}`);
     default:
-      return new Error(`unknown operator: ${left.type()} ${operator} ${right.type()}`);
+      return new Err(`unknown operator: ${left.type()} ${operator} ${right.type()}`);
   }
 }
 
 function evalIdentifier(node: Identifier, env: Environment): MonkeyObject {
   const val = env.get(node.value);
 
-  if (!val) {
-    return new Error(`identifier not found: ${node.value}`)
+  if (val) {
+    return val;
   }
 
-  return val;
+  const builtin = builtins.get(node.value);
+  if (builtin) {
+    return builtin;
+  }
+
+  return new Err(`identifier not found: ${node.value}`)
 }
 
 function evalIfExpression(ie: IfExpression, env: Environment): MonkeyObject {
@@ -243,7 +249,7 @@ function evalBangOperatorExpression(right: MonkeyObject): MonkeyObject {
 
 function evalMinusPrefixOperatorExpression(right: MonkeyObject): MonkeyObject {
   if (right.type() !== OBJECT_TYPE.INTEGER_OBJ) {
-    return new Error(`unknown operator: -${right.type()}`);
+    return new Err(`unknown operator: -${right.type()}`);
   }
 
   const value = (right as Integer).value;
@@ -272,19 +278,19 @@ function evalIntegerInfixExpression(operator: string, left: MonkeyObject, right:
     case '!=':
       return nativeBoolToBooleanObject(leftVal != rightVal);
     default:
-      return new Error(`unknown operator: ${right.type()} ${operator} ${right.type()}`);
+      return new Err(`unknown operator: ${right.type()} ${operator} ${right.type()}`);
   }
 }
 
 function evalStringInfixExpression(operator: string, left: MonkeyObject, right: MonkeyObject): MonkeyObject {
   if (operator !== '+') {
-    return new Error(`unknown operator: ${left.type()} ${operator} ${right.type()}`);
+    return new Err(`unknown operator: ${left.type()} ${operator} ${right.type()}`);
   }
 
-  const leftVal = (left as Str).value;
-  const rightVal = (right as Str).value;
+  const leftVal = (left as MonkeyString).value;
+  const rightVal = (right as MonkeyString).value;
 
-  return new Str(leftVal + rightVal);
+  return new MonkeyString(leftVal + rightVal);
 }
 
 function nativeBoolToBooleanObject(input: boolean): MonkeyObject {
@@ -296,14 +302,18 @@ function nativeBoolToBooleanObject(input: boolean): MonkeyObject {
 }
 
 function applyFunction(fn: MonkeyObject, args: MonkeyObject[]): MonkeyObject {
-  if (!(fn instanceof MonkeyFunction)) {
-    return new Error(`not a function: ${fn.type}`);
+  switch (true) {
+    case (fn instanceof MonkeyFunction): {
+      const extendedEnv = extendedFunctionEnv(fn as MonkeyFunction, args);
+      const evaluated = monkeyEval((fn as MonkeyFunction).body, extendedEnv);
+      return unwrapedReturnValue(evaluated);
+    }
+    case (fn instanceof Builtin): {
+      return (fn as Builtin).fn(args);
+    }
+    default:
+      return new Err(`not a function: ${fn.type()}`);
   }
-
-  const extendedEnv = extendedFunctionEnv(fn, args);
-  const evaluated = monkeyEval(fn.body, extendedEnv);
-
-  return unwrapedReturnValue(evaluated);
 }
 
 function extendedFunctionEnv(fn: MonkeyFunction, args: MonkeyObject[]): Environment {

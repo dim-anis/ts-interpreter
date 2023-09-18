@@ -24,6 +24,7 @@ if (5 < 10) {
 10 != 9;
 "foobar"
 "foo bar"
+[1, 2];
 `;
 
   const tests: {
@@ -329,6 +330,34 @@ if (5 < 10) {
       {
         expectedType: TokenType.STRING,
         expectedLiteral: 'foo bar'
+      },
+      {
+        expectedType: TokenType.LBRACKET,
+        expectedLiteral: '['
+      },
+      {
+        expectedType: TokenType.INT,
+        expectedLiteral: '1'
+      },
+      {
+        expectedType: TokenType.COMMA,
+        expectedLiteral: ','
+      },
+      {
+        expectedType: TokenType.INT,
+        expectedLiteral: '2'
+      },
+      {
+        expectedType: TokenType.RBRACKET,
+        expectedLiteral: ']'
+      },
+      {
+        expectedType: TokenType.SEMICOLON,
+        expectedLiteral: ';'
+      },
+      {
+        expectedType: TokenType.EOF,
+        expectedLiteral: ''
       },
     ];
 

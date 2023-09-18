@@ -1,6 +1,7 @@
 import { Lexer } from '../lexer/lexer';
 import { Token, TokenItem, TokenType } from '../token/token';
 import {
+  ArrayLiteral,
   BlockStatement,
   BooleanLiteral,
   CallExpression,
@@ -72,6 +73,7 @@ export class Parser {
       this.parseFunctionLiteral.bind(this),
     );
     this.registerPrefix(TokenType.STRING, this.parseStringLiteral.bind(this));
+    this.registerPrefix(TokenType.LBRACKET, this.parseArrayLiteral.bind(this));
 
     this.infixParseFns = new Map<TokenItem, InfixParseFn>();
     this.registerInfix(TokenType.PLUS, this.parseInfixExpression.bind(this));
@@ -290,6 +292,48 @@ export class Parser {
     return literal;
   }
 
+  parseArrayLiteral(): Expression {
+    const array = new ArrayLiteral(this._curToken);
+    const elements = this.parseExpressionList(TokenType.RBRACKET);
+    if (elements) {
+      array.elements = elements;
+    }
+
+    return array;
+  }
+
+  parseExpressionList(end: TokenItem): Expression[] | null {
+    const list: Expression[] = [];
+
+    if (this.peekTokenIs(end)) {
+      this.nextToken();
+      return list;
+    }
+
+    this.nextToken();
+
+    const exp = this.parseExpression(Precedence.LOWEST);
+    if (exp) {
+      list.push(exp);
+    }
+
+    while (this.peekTokenIs(TokenType.COMMA)) {
+      this.nextToken();
+      this.nextToken();
+
+      const exp = this.parseExpression(Precedence.LOWEST);
+      if (exp) {
+        list.push(exp);
+      }
+    }
+
+    if (!this.expectPeek(end)) {
+      return null;
+    }
+
+    return list;
+  }
+
   parseFunctionParameters(): Identifier[] | null {
     const identifiers: Identifier[] = [];
 
@@ -340,7 +384,7 @@ export class Parser {
 
   parseCallExpression(fn: Expression): Expression {
     const exp = new CallExpression(this._curToken, fn);
-    const args = this.parseCallArguments();
+    const args = this.parseExpressionList(TokenType.RPAREN);
     if (args) {
       exp.arguments = args;
     }

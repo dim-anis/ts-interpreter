@@ -109,6 +109,12 @@ export class Lexer {
       case ')':
         tok = createNewToken(TokenType.RPAREN, this.ch);
         break;
+      case '[':
+        tok = createNewToken(TokenType.LBRACKET, this.ch);
+        break;
+      case ']':
+        tok = createNewToken(TokenType.RBRACKET, this.ch);
+        break;
       case ',':
         tok = createNewToken(TokenType.COMMA, this.ch);
         break;

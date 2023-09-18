@@ -1,6 +1,7 @@
 import { Parser } from './parser';
 import { Lexer } from '../lexer/lexer';
 import {
+  ArrayLiteral,
   BooleanLiteral,
   CallExpression,
   Expression,
@@ -653,6 +654,32 @@ test('test string literal expression', () => {
     expect(literal).toBeInstanceOf(StringLiteral);
     if (literal instanceof StringLiteral) {
       expect(literal.value).toBe('hello world');
+    }
+  }
+});
+
+test('test parsing array literals', () => {
+  const input = '[1, 2 * 2, 3 + 3]';
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  const stmt = program.statements[0];
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+  if (stmt instanceof ExpressionStatement) {
+    const array = stmt.expression;
+    expect(array).toBeInstanceOf(ArrayLiteral);
+
+    if (array instanceof ArrayLiteral) {
+      expect(array.elements.length).toBe(3);
+
+      testIntegerLiteral(array.elements[0], 1);
+      testInfixExpression(array.elements[1], 2, '*', 2);
+      testInfixExpression(array.elements[2], 3, '+', 3);
     }
   }
 });

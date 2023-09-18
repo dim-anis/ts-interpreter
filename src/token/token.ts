@@ -20,6 +20,8 @@ export const TokenType = {
 
   LPAREN: "(",
   RPAREN: ")",
+  LBRACKET: "[",
+  RBRACKET: "]",
   LBRACE: "{",
   RBRACE: "}",
 

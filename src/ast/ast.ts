@@ -199,6 +199,28 @@ export class FunctionLiteral implements Expression {
   }
 }
 
+export class ArrayLiteral {
+  token: Token;
+  elements!: Expression[];
+
+  constructor(token: Token) {
+    this.token = token;
+  }
+
+  expressionNode(): string {
+    return 'expressionNode';
+  }
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  string(): string {
+    const elements: string[] = [];
+    this.elements.forEach(el => elements.push(el.string()));
+
+    return `[${elements.join(', ')}]`;
+  }
+}
+
 // AST root
 export class Program implements Node {
   statements: Statement[] = [];

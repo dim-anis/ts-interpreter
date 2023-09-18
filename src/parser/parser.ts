@@ -10,6 +10,7 @@ import {
   FunctionLiteral,
   Identifier,
   IfExpression,
+  IndexExpression,
   InfixExpression,
   IntegerLiteral,
   LetStatement,
@@ -31,6 +32,7 @@ enum Precedence {
   PRODUCT,
   PREFIX,
   CALL,
+  INDEX
 }
 
 const precedences = new Map<TokenItem, Precedence>();
@@ -43,6 +45,7 @@ precedences.set(TokenType.MINUS, Precedence.SUM);
 precedences.set(TokenType.SLASH, Precedence.PRODUCT);
 precedences.set(TokenType.ASTERISK, Precedence.PRODUCT);
 precedences.set(TokenType.LPAREN, Precedence.CALL);
+precedences.set(TokenType.LBRACKET, Precedence.INDEX);
 
 export class Parser {
   private _curToken!: Token;
@@ -88,6 +91,7 @@ export class Parser {
     this.registerInfix(TokenType.LT, this.parseInfixExpression.bind(this));
     this.registerInfix(TokenType.GT, this.parseInfixExpression.bind(this));
     this.registerInfix(TokenType.LPAREN, this.parseCallExpression.bind(this));
+    this.registerInfix(TokenType.LBRACKET, this.parseIndexExpression.bind(this));
   }
 
   registerPrefix(tokenType: TokenItem, fn: PrefixParseFn) {
@@ -387,6 +391,22 @@ export class Parser {
     const args = this.parseExpressionList(TokenType.RPAREN);
     if (args) {
       exp.arguments = args;
+    }
+
+    return exp;
+  }
+
+  parseIndexExpression(left: Expression): Expression | null {
+    const exp = new IndexExpression(this._curToken, left);
+
+    this.nextToken();
+    const expression = this.parseExpression(Precedence.LOWEST);
+    if (expression) {
+      exp.index = expression;
+    }
+
+    if (!this.expectPeek(TokenType.RBRACKET)) {
+      return null;
     }
 
     return exp;

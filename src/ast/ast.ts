@@ -113,6 +113,27 @@ export class CallExpression implements Expression {
   }
 }
 
+export class IndexExpression implements Expression {
+  token: Token;
+  left: Expression;
+  index!: Expression;
+
+  constructor(token: Token, left: Expression) {
+    this.token = token;
+    this.left = left;
+  }
+
+  expressionNode(): string {
+    return 'expressionNode';
+  }
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  string(): string {
+    return `(${this.left.string()}[${this.index.string()}])`;
+  }
+}
+
 export class IntegerLiteral implements Expression {
   token: Token;
   value!: number;

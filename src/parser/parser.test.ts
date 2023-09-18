@@ -9,6 +9,7 @@ import {
   FunctionLiteral,
   Identifier,
   IfExpression,
+  IndexExpression,
   InfixExpression,
   IntegerLiteral,
   LetStatement,
@@ -413,6 +414,14 @@ test('test operator precedence parsing', () => {
         input: 'add(a + b + c * d / f + g)',
         expected: 'add((((a + b) + ((c * d) / f)) + g))',
       },
+      {
+        input: 'a * [1, 2, 3, 4][b * c] * d',
+        expected: '((a * ([1, 2, 3, 4][(b * c)])) * d)'
+      },
+      {
+        input: 'add(a * b[2], b[1], 2 * [1, 2][1])',
+        expected: 'add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))'
+      },
     ];
 
   for (const test of tests) {
@@ -680,6 +689,29 @@ test('test parsing array literals', () => {
       testIntegerLiteral(array.elements[0], 1);
       testInfixExpression(array.elements[1], 2, '*', 2);
       testInfixExpression(array.elements[2], 3, '+', 3);
+    }
+  }
+});
+
+test('test parsing index expression', () => {
+  const input = 'myArray[1 + 1]';
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  const stmt = program.statements[0];
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+  if (stmt instanceof ExpressionStatement) {
+    const indexExp = stmt.expression;
+    expect(indexExp).toBeInstanceOf(IndexExpression);
+
+    if (indexExp instanceof IndexExpression) {
+      testIdentifier(indexExp.left, 'myArray');
+      testInfixExpression(indexExp.index, 1, '+', 1);
     }
   }
 });

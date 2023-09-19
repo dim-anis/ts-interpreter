@@ -1,5 +1,5 @@
-import { BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, StringLiteral } from "../ast/ast";
-import { Boolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin } from "../object/object";
+import { ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, StringLiteral } from "../ast/ast";
+import { Boolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin, MonkeyArray } from "../object/object";
 import builtins from "./builtins";
 
 export const NATIVE_TO_OBJ = {
@@ -39,10 +39,6 @@ export function monkeyEval(node: Node, env: Environment): MonkeyObject {
         return evalInfixExpression(node.operator, left, right);
       }
       return NATIVE_TO_OBJ.NULL;
-    case node instanceof FunctionLiteral: {
-      const { parameters, body } = node as FunctionLiteral;
-      return new MonkeyFunction(parameters || [], body, env);
-    }
     case node instanceof CallExpression: {
       const fn = monkeyEval((node as CallExpression).fn, env);
       if (isError(fn)) {
@@ -57,12 +53,35 @@ export function monkeyEval(node: Node, env: Environment): MonkeyObject {
 
       return applyFunction(fn, args);
     }
+    case node instanceof IndexExpression: {
+      const left = monkeyEval((node as IndexExpression).left, env);
+      if (isError(left)) {
+        return left;
+      }
+
+      const index = monkeyEval((node as IndexExpression).index, env);
+      if (isError(index)) {
+        return index;
+      }
+      return evalIndexExpression(left, index);
+    }
+    case node instanceof FunctionLiteral: {
+      const { parameters, body } = node as FunctionLiteral;
+      return new MonkeyFunction(parameters || [], body, env);
+    }
     case node instanceof IntegerLiteral:
       return new Integer((node as IntegerLiteral).value);
     case node instanceof StringLiteral:
       return new MonkeyString((node as StringLiteral).value);
     case node instanceof BooleanLiteral:
       return nativeBoolToBooleanObject((node as BooleanLiteral).value);
+    case node instanceof ArrayLiteral: {
+      const elements = evalExpressions((node as ArrayLiteral).elements, env);
+      if (elements.length === 1 && isError(elements[0])) {
+        return elements[0];
+      }
+      return new MonkeyArray(elements);
+    }
     case node instanceof BlockStatement:
       return evalBlockStatement(node as BlockStatement, env);
     case node instanceof LetStatement: {
@@ -174,6 +193,16 @@ function evalInfixExpression(operator: string, left: MonkeyObject, right: Monkey
       return new Err(`type mismatch: ${left.type()} ${operator} ${right.type()}`);
     default:
       return new Err(`unknown operator: ${left.type()} ${operator} ${right.type()}`);
+  }
+}
+
+function evalIndexExpression(left: MonkeyObject, index: MonkeyObject): MonkeyObject {
+  switch (true) {
+    case left.type() === OBJECT_TYPE.ARRAY_OBJ && index.type() === OBJECT_TYPE.INTEGER_OBJ: {
+      return evalArrayIndexExpression(left, index);
+    }
+    default:
+      return new Err(`index operator not supported: ${left.type()}`);
   }
 }
 
@@ -291,6 +320,18 @@ function evalStringInfixExpression(operator: string, left: MonkeyObject, right: 
   const rightVal = (right as MonkeyString).value;
 
   return new MonkeyString(leftVal + rightVal);
+}
+
+function evalArrayIndexExpression(array: MonkeyObject, index: MonkeyObject): MonkeyObject {
+  const arrayObj = array as MonkeyArray;
+  const idx = (index as Integer).value;
+  const max = arrayObj.elements.length - 1;
+
+  if (idx < 0 || idx > max) {
+    return NATIVE_TO_OBJ.NULL;
+  }
+
+  return arrayObj.elements[idx];
 }
 
 function nativeBoolToBooleanObject(input: boolean): MonkeyObject {

@@ -9,6 +9,7 @@ export const OBJECT_TYPE = {
   INTEGER_OBJ: "INTEGER",
   STRING_OBJ: "STRING",
   BOOLEAN_OBJ: "BOOLEAN",
+  ARRAY_OBJ: "ARRAY",
   RETURN_VALUE_OBJ: "RETURN_VALUE",
   FUNCTION_OBJ: "FUNCTION",
   BUILTIN_OBJ: "BUILTIN",
@@ -60,6 +61,24 @@ export class Boolean implements MonkeyObject {
   }
   inspect(): string {
     return `${this.value}`;
+  }
+}
+
+export class MonkeyArray {
+  elements: MonkeyObject[];
+
+  constructor(elements: MonkeyObject[]) {
+    this.elements = elements;
+  }
+
+  type(): MonkeyObjectType {
+    return OBJECT_TYPE.ARRAY_OBJ;
+  }
+  inspect(): string {
+    const elements: string[] = [];
+    this.elements.forEach(el => elements.push(el.inspect()));
+
+    return `[${elements.join(', ')}]`;
   }
 }
 

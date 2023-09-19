@@ -1,5 +1,5 @@
 import { Lexer } from "../lexer/lexer";
-import { Boolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString } from "../object/object";
+import { Boolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray } from "../object/object";
 import { Parser } from "../parser/parser";
 import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
 
@@ -472,6 +472,78 @@ test('test builtin functions', () => {
     }
   }
 });
+
+test('test array literals', () => {
+  const input = '[1, 2 * 2, 3 + 3]';
+
+  const evaluated = testEval(input);
+  expect(evaluated).toBeInstanceOf(MonkeyArray);
+
+  if (evaluated instanceof MonkeyArray) {
+    const result = evaluated;
+
+    expect(result.elements.length).toBe(3);
+
+    testIntegerObject(result.elements[0], 1);
+    testIntegerObject(result.elements[1], 4);
+    testIntegerObject(result.elements[2], 6);
+  }
+})
+
+test('test array index expressions', () => {
+  const tests: Test<any>[] = [
+    {
+      input: '[1, 2 ,3][0]',
+      expected: 1,
+    },
+    {
+      input: '[1, 2 ,3][1]',
+      expected: 2,
+    },
+    {
+      input: '[1, 2 ,3][2]',
+      expected: 3,
+    },
+    {
+      input: 'let i = 0; [1][i];',
+      expected: 1,
+    },
+    {
+      input: '[1, 2, 3][1 + 1];',
+      expected: 3,
+    },
+    {
+      input: 'let myArray = [1, 2, 3]; myArray[2];',
+      expected: 3,
+    },
+    {
+      input: 'let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];',
+      expected: 6,
+    },
+    {
+      input: 'let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i];',
+      expected: 2,
+    },
+    {
+      input: '[1, 2, 3][3]',
+      expected: null,
+    },
+    {
+      input: '[1, 2, 3][-1]',
+      expected: null,
+    },
+  ];
+
+  for (const test of tests) {
+    const evaluated = testEval(test.input);
+
+    if (evaluated instanceof Integer) {
+      testIntegerObject(evaluated, test.expected);
+    } else {
+      testNullObject(evaluated);
+    }
+  }
+})
 
 function testNullObject(obj: MonkeyObject): boolean {
   expect(obj).toBe(NATIVE_TO_OBJ.NULL);

@@ -8,6 +8,7 @@ import {
   Expression,
   ExpressionStatement,
   FunctionLiteral,
+  HashLiteral,
   Identifier,
   IfExpression,
   IndexExpression,
@@ -77,6 +78,7 @@ export class Parser {
     );
     this.registerPrefix(TokenType.STRING, this.parseStringLiteral.bind(this));
     this.registerPrefix(TokenType.LBRACKET, this.parseArrayLiteral.bind(this));
+    this.registerPrefix(TokenType.LBRACE, this.parseHashLiteral.bind(this));
 
     this.infixParseFns = new Map<TokenItem, InfixParseFn>();
     this.registerInfix(TokenType.PLUS, this.parseInfixExpression.bind(this));
@@ -304,6 +306,37 @@ export class Parser {
     }
 
     return array;
+  }
+
+  parseHashLiteral(): Expression | null {
+    const hash = new HashLiteral(this._curToken);
+    hash.pairs = new Map<Expression, Expression>();
+
+    while (!this.peekTokenIs(TokenType.RBRACE)) {
+      this.nextToken();
+      const key = this.parseExpression(Precedence.LOWEST);
+
+      if (!this.expectPeek(TokenType.COLON)) {
+        return null;
+      }
+
+      this.nextToken();
+      const value = this.parseExpression(Precedence.LOWEST);
+      
+      if (key && value) {
+        hash.pairs.set(key, value);
+      }
+
+      if (!this.peekTokenIs(TokenType.RBRACE) && !this.expectPeek(TokenType.COMMA)) {
+        return null;
+      }
+    }
+
+    if (!this.expectPeek(TokenType.RBRACE)) {
+      return null;
+    }
+
+    return hash;
   }
 
   parseExpressionList(end: TokenItem): Expression[] | null {

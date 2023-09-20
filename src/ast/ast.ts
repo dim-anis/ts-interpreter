@@ -242,6 +242,29 @@ export class ArrayLiteral {
   }
 }
 
+export class HashLiteral {
+  token: Token;
+  pairs!: Map<Expression, Expression>;
+
+  constructor(token: Token) {
+    this.token = token;
+  }
+
+  expressionNode(): string {
+    return 'expressionNode';
+  }
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  string(): string {
+    const pairs: string[] = [];
+
+    this.pairs.forEach(pair => pairs.push(pair.string()));
+
+    return `{${pairs.join(', ')}}`;
+  }
+}
+
 // AST root
 export class Program implements Node {
   statements: Statement[] = [];

@@ -25,6 +25,7 @@ if (5 < 10) {
 "foobar"
 "foo bar"
 [1, 2];
+{"foo": "bar"}
 `;
 
   const tests: {
@@ -325,7 +326,7 @@ if (5 < 10) {
       },
       {
         expectedType: TokenType.STRING,
-        expectedLiteral: 'foobar' 
+        expectedLiteral: 'foobar'
       },
       {
         expectedType: TokenType.STRING,
@@ -354,6 +355,26 @@ if (5 < 10) {
       {
         expectedType: TokenType.SEMICOLON,
         expectedLiteral: ';'
+      },
+      {
+        expectedType: TokenType.LBRACE,
+        expectedLiteral: '{'
+      },
+      {
+        expectedType: TokenType.STRING,
+        expectedLiteral: 'foo'
+      },
+      {
+        expectedType: TokenType.COLON,
+        expectedLiteral: ':'
+      },
+      {
+        expectedType: TokenType.STRING,
+        expectedLiteral: 'bar'
+      },
+      {
+        expectedType: TokenType.RBRACE,
+        expectedLiteral: '}'
       },
       {
         expectedType: TokenType.EOF,

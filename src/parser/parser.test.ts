@@ -7,6 +7,7 @@ import {
   Expression,
   ExpressionStatement,
   FunctionLiteral,
+  HashLiteral,
   Identifier,
   IfExpression,
   IndexExpression,
@@ -712,6 +713,114 @@ test('test parsing index expression', () => {
     if (indexExp instanceof IndexExpression) {
       testIdentifier(indexExp.left, 'myArray');
       testInfixExpression(indexExp.index, 1, '+', 1);
+    }
+  }
+});
+
+test('test parsing hash literals string keys', () => {
+  const input = '{"one": 1, "two": 2, "three": 3}';
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  const stmt = program.statements[0];
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+  if (stmt instanceof ExpressionStatement) {
+    const hash = stmt.expression;
+    expect(hash).toBeInstanceOf(HashLiteral);
+
+    if (hash instanceof HashLiteral) {
+      expect(hash.pairs.size).toBe(3);
+
+      const expected = new Map<string, number>([
+        ["one", 1],
+        ["two", 2],
+        ["three", 3],
+      ]);
+
+      hash.pairs.forEach((key, value) => {
+        const expectedValue = expected.get(key.string());
+        if (expectedValue) {
+          testIntegerLiteral(value, expectedValue);
+        }
+      })
+    }
+  }
+});
+
+test('test parsing empty hash literal', () => {
+  const input = '{}';
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  const stmt = program.statements[0];
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+  if (stmt instanceof ExpressionStatement) {
+    const hash = stmt.expression;
+
+    if (hash instanceof HashLiteral) {
+      expect(hash.pairs.size).toBe(0);
+    }
+  }
+});
+
+test('test parsing hash literals with expressions', () => {
+  const input = '{"one": 0 + 1, "two": 10 - 8, "three": 15 / 5}';
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  const stmt = program.statements[0];
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+  if (stmt instanceof ExpressionStatement) {
+    const hash = stmt.expression;
+    expect(hash).toBeInstanceOf(HashLiteral);
+
+    if (hash instanceof HashLiteral) {
+      expect(hash.pairs.size).toBe(3);
+
+      const tests = new Map([
+        [
+          'one',
+          (e: Expression) => {
+            testInfixExpression(e, 0, '+', 1);
+          }
+        ],
+        [
+          'two',
+          (e: Expression) => {
+            testInfixExpression(e, 10, '-', 8);
+          }
+        ],
+        [
+          'three',
+          (e: Expression) => {
+            testInfixExpression(e, 15, '/', 5);
+          }
+        ]
+      ]);
+
+      hash.pairs.forEach((key, value) => {
+        const testFunc = tests.get(key.string());
+        expect(tests.has(key.string()));
+
+        if (testFunc) {
+          testFunc(value);
+        }
+      })
     }
   }
 });

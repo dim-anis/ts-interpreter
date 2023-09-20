@@ -16,6 +16,7 @@ export const TokenType = {
   GT: ">",
 
   COMMA: ",",
+  COLON: ":",
   SEMICOLON: ";",
 
   LPAREN: "(",

@@ -1,5 +1,16 @@
 import { BlockStatement, Identifier } from "../ast/ast";
 
+function djb2Hash(str: string) {
+  let hash = 5381; // Initial hash value
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) + hash) + char; // hash * 33 + char
+  }
+
+  return hash;
+}
+
 export interface MonkeyObject {
   type(): MonkeyObjectType;
   inspect(): string;
@@ -12,12 +23,58 @@ export const OBJECT_TYPE = {
   ARRAY_OBJ: "ARRAY",
   RETURN_VALUE_OBJ: "RETURN_VALUE",
   FUNCTION_OBJ: "FUNCTION",
+  HASH_OBJ: "HASH",
   BUILTIN_OBJ: "BUILTIN",
   ERROR_OBJ: "ERROR",
   NULL_OBJ: "NULL"
 } as const;
 
 export type MonkeyObjectType = typeof OBJECT_TYPE[keyof typeof OBJECT_TYPE];
+
+export class HashKey {
+  type: MonkeyObjectType;
+  value: number;
+
+  constructor(type: MonkeyObjectType, value: number) {
+    this.type = type;
+    this.value = value;
+  }
+}
+
+export class HashPair {
+  key: MonkeyObject;
+  value: MonkeyObject;
+
+  constructor(key: MonkeyObject, value: MonkeyObject) {
+    this.key = key;
+    this.value = value;
+  }
+}
+
+export interface Hashable {
+  hashKey(): HashKey;
+}
+
+export class MonkeyHash {
+  pairs: Map<HashKey, HashPair>;
+
+  constructor(pairs: Map<HashKey, HashPair>) {
+    this.pairs = pairs;
+  }
+
+  type(): MonkeyObjectType {
+    return OBJECT_TYPE.HASH_OBJ;
+  }
+  inspect(): string {
+    const pairs: string[] = [];
+
+    this.pairs.forEach(pair =>
+      pairs.push(`${pair.key.inspect()}: ${pair.value.inspect()}`)
+    );
+
+    return `{${pairs.join(', ')}}`;
+  }
+}
 
 export class Integer implements MonkeyObject {
   value: number;
@@ -31,6 +88,9 @@ export class Integer implements MonkeyObject {
   }
   inspect(): string {
     return `${this.value}`;
+  }
+  hashKey(): HashKey {
+    return new HashKey(this.type(), this.value);
   }
 }
 
@@ -47,6 +107,10 @@ export class MonkeyString implements MonkeyObject {
   inspect(): string {
     return `${this.value}`;
   }
+  hashKey(): HashKey {
+    const hashValue = djb2Hash(this.value);
+    return new HashKey(this.type(), hashValue);
+  }
 }
 
 export class Boolean implements MonkeyObject {
@@ -61,6 +125,17 @@ export class Boolean implements MonkeyObject {
   }
   inspect(): string {
     return `${this.value}`;
+  }
+  hashKey(): HashKey {
+    let value: number;
+
+    if (this.value) {
+      value = 1;
+    } else {
+      value = 0;
+    }
+
+    return new HashKey(this.type(), value);
   }
 }
 
@@ -106,10 +181,6 @@ export class MonkeyFunction {
     return `fn(${params.join(', ')})\n${this.body.string()}\n`;
   }
 }
-
-export class BuiltinFunction {
-}
-
 
 export interface BuiltinFunction {
   (args: MonkeyObject[]): MonkeyObject;

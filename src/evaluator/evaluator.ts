@@ -1,5 +1,5 @@
-import { ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, StringLiteral } from "../ast/ast";
-import { Boolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin, MonkeyArray } from "../object/object";
+import { ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, StringLiteral } from "../ast/ast";
+import { Boolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin, MonkeyArray, HashKey, HashPair, MonkeyHash, Hashable } from "../object/object";
 import builtins from "./builtins";
 
 export const NATIVE_TO_OBJ = {
@@ -82,6 +82,8 @@ export function monkeyEval(node: Node, env: Environment): MonkeyObject {
       }
       return new MonkeyArray(elements);
     }
+    case node instanceof HashLiteral:
+      return evalHashLiteral((node as HashLiteral), env);
     case node instanceof BlockStatement:
       return evalBlockStatement(node as BlockStatement, env);
     case node instanceof LetStatement: {
@@ -148,6 +150,35 @@ function evalBlockStatement(block: BlockStatement, env: Environment): MonkeyObje
   }
 
   return result as MonkeyObject;
+}
+
+function evalHashLiteral(node: HashLiteral, env: Environment): MonkeyObject {
+  const pairs: Map<HashKey, HashPair> = new Map();
+
+  node.pairs.forEach((valNode, keyNode) => {
+    const key = monkeyEval(keyNode, env);
+    if (isError(key)) {
+      return key;
+    }
+
+    if (!('hashKey' in key)) {
+      return new Err(`unusable as hash key: ${key.type()}`);
+    }
+
+    const hashKey = key as Hashable;
+
+    const value = monkeyEval(valNode, env);
+    if (isError(value)) {
+      return value;
+    }
+
+    const hashed = hashKey.hashKey();
+    pairs.set(hashed, new HashPair(key, value));
+
+    return pairs;
+  })
+
+  return new MonkeyHash(pairs);
 }
 
 function evalExpressions(exps: Expression[], env: Environment): MonkeyObject[] {

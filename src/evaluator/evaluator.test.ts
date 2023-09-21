@@ -1,5 +1,6 @@
+import exp from "constants";
 import { Lexer } from "../lexer/lexer";
-import { Boolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray } from "../object/object";
+import { Boolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray, MonkeyHash, MonkeyNull } from "../object/object";
 import { Parser } from "../parser/parser";
 import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
 
@@ -544,6 +545,42 @@ test('test array index expressions', () => {
     }
   }
 })
+
+test('test hash literals', () => {
+  const input = `
+let two = "two";
+{
+  "one": 10 - 9,
+  two: 1 + 1,
+  "thr" + "ee": 6 /2,
+  4: 4,
+  true: 5,
+  false: 6
+}`
+  const evaluated = testEval(input);
+  expect(evaluated).toBeInstanceOf(MonkeyHash);
+
+  const result = evaluated;
+  if (result instanceof MonkeyHash) {
+    const expected = new Map([
+      [(new MonkeyString('one')).hashKey(), 1],
+      [(new MonkeyString('two')).hashKey(), 2],
+      [(new MonkeyString('three')).hashKey(), 3],
+      [(new Integer(4)).hashKey(), 4],
+      [NATIVE_TO_OBJ.TRUE.hashKey(), 5],
+      [NATIVE_TO_OBJ.FALSE.hashKey(), 6],
+    ]);
+
+    expect(result.pairs.size).toBe(expected.size);
+
+    expected.forEach((expVal, expKey) => {
+      const pair = result.pairs.get(expKey);
+      if (pair) {
+        testIntegerObject(pair?.value, expVal);
+      }
+    });
+  }
+});
 
 function testNullObject(obj: MonkeyObject): boolean {
   expect(obj).toBe(NATIVE_TO_OBJ.NULL);

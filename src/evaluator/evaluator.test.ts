@@ -1,6 +1,5 @@
-import exp from "constants";
 import { Lexer } from "../lexer/lexer";
-import { Boolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray, MonkeyHash, MonkeyNull } from "../object/object";
+import { Boolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray, MonkeyHash } from "../object/object";
 import { Parser } from "../parser/parser";
 import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
 
@@ -318,6 +317,10 @@ return 1;
     {
       input: '"Hello" - "World!"',
       expected: 'unknown operator: STRING - STRING'
+    },
+    {
+      input: '{"name": "Monkey"}[fn(x) { x }];',
+      expected: 'unusable as hash key: FUNCTION',
     }
   ];
 
@@ -574,13 +577,57 @@ let two = "two";
     expect(result.pairs.size).toBe(expected.size);
 
     expected.forEach((expVal, expKey) => {
-      const pair = result.pairs.get(expKey);
+      const pair = result.pairs.get(JSON.stringify(expKey));
       if (pair) {
         testIntegerObject(pair?.value, expVal);
       }
     });
   }
 });
+
+test('test hash index expressions', () => {
+  const tests: Test<any>[] = [
+    {
+      input: '{"foo": 5}["foo"]',
+      expected: 5
+    },
+    {
+      input: '{"foo": 5}["bar"]',
+      expected: null
+    },
+    {
+      input: 'let key = "foo"; {"foo": 5}[key]',
+      expected: 5
+    },
+    {
+      input: '{}["foo"]',
+      expected: null
+    },
+    {
+      input: '{5: 5}[5]',
+      expected: 5
+    },
+    {
+      input: '{true: 5}[true]',
+      expected: 5
+    },
+    {
+      input: '{false: 5}[false]',
+      expected: 5
+    },
+  ]
+
+  for (const test of tests) {
+    const evaluated = testEval(test.input);
+    const integer = test.expected;
+
+    if (typeof integer === 'number') {
+      testIntegerObject(evaluated, integer);
+    } else {
+      testNullObject(evaluated);
+    }
+  }
+})
 
 function testNullObject(obj: MonkeyObject): boolean {
   expect(obj).toBe(NATIVE_TO_OBJ.NULL);

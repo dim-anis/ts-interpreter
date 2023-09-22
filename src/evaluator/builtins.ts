@@ -85,10 +85,18 @@ const arrPush = new Builtin(
   }
 )
 
+const puts = new Builtin(
+  (args: MonkeyObject[]): MonkeyObject => {
+    args.forEach(arg => console.log(arg.inspect()))
+    return NATIVE_TO_OBJ.NULL;
+  }
+)
+
 builtins.set('len', lenFn);
 builtins.set('first', arrFirst);
 builtins.set('last', arrLast);
 builtins.set('rest', arrRest);
 builtins.set('push', arrPush);
+builtins.set('puts', puts);
 
 export default builtins;

@@ -153,7 +153,7 @@ function evalBlockStatement(block: BlockStatement, env: Environment): MonkeyObje
 }
 
 function evalHashLiteral(node: HashLiteral, env: Environment): MonkeyObject {
-  const pairs: Map<HashKey, HashPair> = new Map();
+  const pairs: Map<string, HashPair> = new Map();
 
   node.pairs.forEach((valNode, keyNode) => {
     const key = monkeyEval(keyNode, env);
@@ -173,7 +173,7 @@ function evalHashLiteral(node: HashLiteral, env: Environment): MonkeyObject {
     }
 
     const hashed = hashKey.hashKey();
-    pairs.set(hashed, new HashPair(key, value));
+    pairs.set(JSON.stringify(hashed), new HashPair(key, value));
 
     return pairs;
   })
@@ -231,6 +231,9 @@ function evalIndexExpression(left: MonkeyObject, index: MonkeyObject): MonkeyObj
   switch (true) {
     case left.type() === OBJECT_TYPE.ARRAY_OBJ && index.type() === OBJECT_TYPE.INTEGER_OBJ: {
       return evalArrayIndexExpression(left, index);
+    }
+    case left.type() === OBJECT_TYPE.HASH_OBJ: {
+      return evalHashIndexExpression(left, index);
     }
     default:
       return new Err(`index operator not supported: ${left.type()}`);
@@ -363,6 +366,20 @@ function evalArrayIndexExpression(array: MonkeyObject, index: MonkeyObject): Mon
   }
 
   return arrayObj.elements[idx];
+}
+
+function evalHashIndexExpression(hash: MonkeyObject, index: MonkeyObject): MonkeyObject {
+  const hashObject = hash as MonkeyHash;
+
+  if (!('hashKey' in index)) {
+    return new Err(`unusable as hash key: ${index.type()}`)
+  }
+
+  const key = index as Hashable;
+
+  const pair = hashObject.pairs.get(JSON.stringify(key.hashKey()));
+
+  return pair ? pair.value : NATIVE_TO_OBJ.NULL;
 }
 
 function nativeBoolToBooleanObject(input: boolean): MonkeyObject {

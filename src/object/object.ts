@@ -56,9 +56,9 @@ export interface Hashable {
 }
 
 export class MonkeyHash {
-  pairs: Map<HashKey, HashPair>;
+  pairs: Map<string, HashPair>;
 
-  constructor(pairs: Map<HashKey, HashPair>) {
+  constructor(pairs: Map<string, HashPair>) {
     this.pairs = pairs;
   }
 

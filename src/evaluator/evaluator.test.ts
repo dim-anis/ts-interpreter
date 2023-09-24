@@ -1,5 +1,5 @@
 import { Lexer } from "../lexer/lexer";
-import { Boolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray, MonkeyHash } from "../object/object";
+import { Boolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray, MonkeyHash, Quote } from "../object/object";
 import { Parser } from "../parser/parser";
 import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
 
@@ -625,6 +625,40 @@ test('test hash index expressions', () => {
       testIntegerObject(evaluated, integer);
     } else {
       testNullObject(evaluated);
+    }
+  }
+})
+
+test('quote unquote test', () => {
+  const tests: Test<string>[] = [
+    {
+      input: 'quote(5)',
+      expected: '5'
+    },
+    {
+      input: 'quote(5 + 8)',
+      expected: '(5 + 8)'
+    },
+    {
+      input: 'quote(foobar)',
+      expected: 'foobar'
+    },
+    {
+      input: 'quote(foobar + barfoo)',
+      expected: '(foobar + barfoo)'
+    },
+  ];
+
+  for (const test of tests) {
+    const evaluated = testEval(test.input);
+
+    expect(evaluated).toBeInstanceOf(Quote);
+
+    if (evaluated instanceof Quote) {
+      const quote = evaluated;
+
+      expect(quote.node).not.toBe(null);
+      expect(quote.node.string()).toBe(test.expected);
     }
   }
 })

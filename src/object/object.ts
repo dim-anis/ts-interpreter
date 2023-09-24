@@ -1,4 +1,4 @@
-import { BlockStatement, Identifier } from "../ast/ast";
+import { BlockStatement, Identifier, Node } from "../ast/ast";
 
 function djb2Hash(str: string) {
   let hash = 5381; // Initial hash value
@@ -26,7 +26,8 @@ export const OBJECT_TYPE = {
   HASH_OBJ: "HASH",
   BUILTIN_OBJ: "BUILTIN",
   ERROR_OBJ: "ERROR",
-  NULL_OBJ: "NULL"
+  NULL_OBJ: "NULL",
+  QUOTE_OBJ: "QUOTE"
 } as const;
 
 export type MonkeyObjectType = typeof OBJECT_TYPE[keyof typeof OBJECT_TYPE];
@@ -238,6 +239,22 @@ export class MonkeyNull implements MonkeyObject {
   }
   inspect(): string {
     return 'null';
+  }
+}
+
+export class Quote implements MonkeyObject {
+  node: Node;
+
+  constructor(node: Node) {
+    this.node = node;
+  }
+
+  type(): MonkeyObjectType {
+    return OBJECT_TYPE.QUOTE_OBJ;
+  }
+
+  inspect(): string {
+    return `QUOTE(${this.node.string()})`;
   }
 }
 

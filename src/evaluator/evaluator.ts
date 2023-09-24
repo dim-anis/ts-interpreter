@@ -1,5 +1,5 @@
 import { ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, StringLiteral } from "../ast/ast";
-import { Boolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin, MonkeyArray, HashKey, HashPair, MonkeyHash, Hashable } from "../object/object";
+import { Boolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin, MonkeyArray, HashKey, HashPair, MonkeyHash, Hashable, Quote } from "../object/object";
 import builtins from "./builtins";
 
 export const NATIVE_TO_OBJ = {
@@ -40,6 +40,9 @@ export function monkeyEval(node: Node, env: Environment): MonkeyObject {
       }
       return NATIVE_TO_OBJ.NULL;
     case node instanceof CallExpression: {
+      if ((node as CallExpression).fn.tokenLiteral() === 'quote') {
+        return quote((node as CallExpression).arguments[0]);
+      }
       const fn = monkeyEval((node as CallExpression).fn, env);
       if (isError(fn)) {
         return fn;
@@ -421,4 +424,8 @@ function unwrapedReturnValue(obj: MonkeyObject): MonkeyObject {
   }
 
   return obj;
+}
+
+function quote(node: Node): MonkeyObject {
+  return new Quote(node);
 }

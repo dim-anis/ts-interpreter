@@ -1,5 +1,6 @@
-import { ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, StringLiteral } from "../ast/ast";
+import { ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, StringLiteral, modify } from "../ast/ast";
 import { Boolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin, MonkeyArray, HashKey, HashPair, MonkeyHash, Hashable, Quote } from "../object/object";
+import { TokenType, createNewToken } from "../token/token";
 import builtins from "./builtins";
 
 export const NATIVE_TO_OBJ = {
@@ -41,7 +42,7 @@ export function monkeyEval(node: Node, env: Environment): MonkeyObject {
       return NATIVE_TO_OBJ.NULL;
     case node instanceof CallExpression: {
       if ((node as CallExpression).fn.tokenLiteral() === 'quote') {
-        return quote((node as CallExpression).arguments[0]);
+        return quote((node as CallExpression).arguments[0], env);
       }
       const fn = monkeyEval((node as CallExpression).fn, env);
       if (isError(fn)) {
@@ -426,6 +427,49 @@ function unwrapedReturnValue(obj: MonkeyObject): MonkeyObject {
   return obj;
 }
 
-function quote(node: Node): MonkeyObject {
+function quote(node: Node, env: Environment): MonkeyObject {
+  node = evalUnquoteCalls(node, env);
   return new Quote(node);
+}
+
+function evalUnquoteCalls(quoted: Node, env: Environment): Node {
+  return modify(quoted, (node): Node => {
+    if (!isUnquoteCall(node)) {
+      return node;
+    }
+
+    if (!(node instanceof CallExpression)) {
+      return node;
+    }
+
+    const call = node as CallExpression;
+    if (call.arguments.length !== 1) {
+      return node;
+    }
+
+    const unquoted = monkeyEval(call.arguments[0], env);
+    return convertObjectToASTNode(unquoted);
+  })
+}
+
+function isUnquoteCall(node: Node): boolean {
+  if (!(node instanceof CallExpression)) {
+    return false;
+  }
+  const callExp = node
+
+  return callExp.fn.tokenLiteral() === 'unquote'
+}
+
+function convertObjectToASTNode(obj: MonkeyObject): Node {
+  switch (obj.type()) {
+    case 'INTEGER': {
+      const t = createNewToken(TokenType.INT, (obj as Integer).value.toString());
+      const intLiteral = new IntegerLiteral(t);
+      intLiteral.value = (obj as Integer).value;
+      return intLiteral;
+    }
+    default:
+      return new IntegerLiteral({ type: TokenType.INT, literal: '0' });
+  }
 }

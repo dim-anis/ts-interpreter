@@ -408,3 +408,44 @@ export class Identifier implements Expression {
     return this.value;
   }
 }
+
+type ModifierFunc = (node: Node) => Node;
+
+export function modify(node: Node, modifier: ModifierFunc): Node {
+  switch (true) {
+    case (node instanceof Program): {
+      const p = node as Program;
+      p.statements.forEach(stmt => modify(stmt, modifier));
+      break;
+    }
+    case (node instanceof ExpressionStatement): {
+      const expressionStmt = node as ExpressionStatement;
+      const expression = (expressionStmt).expression;
+      if (expression) {
+        expressionStmt.expression = modify(expression, modifier) as Expression;
+      }
+      break;
+    }
+    case (node instanceof InfixExpression): {
+      const exp = node as InfixExpression;
+      const { left, right } = exp;
+
+      if (left) {
+        exp.left = modify(left, modifier) as Expression;
+      }
+      if (right) {
+        exp.right = modify(right, modifier) as Expression;
+      }
+      break;
+    }
+    case (node instanceof PrefixExpression): {
+      const exp = node as PrefixExpression;
+      const right = exp.right;
+      if (right) {
+        exp.right = modify(right, modifier) as Expression;
+      }
+    }
+  }
+
+  return modifier(node);
+}

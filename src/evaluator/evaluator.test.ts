@@ -629,7 +629,7 @@ test('test hash index expressions', () => {
   }
 })
 
-test('quote unquote test', () => {
+test('test quote unquote', () => {
   const tests: Test<string>[] = [
     {
       input: 'quote(5)',
@@ -647,6 +647,23 @@ test('quote unquote test', () => {
       input: 'quote(foobar + barfoo)',
       expected: '(foobar + barfoo)'
     },
+    {
+      input: 'quote(unquote(4))',
+      expected: '4'
+    },
+    {
+      input: 'quote(unquote(4 + 4))',
+      expected: '8'
+    },
+    {
+      input: 'quote(8 + unquote(4 + 4))',
+      expected: '(8 + 8)'
+    },
+    {
+      input: 'quote(unquote(4 + 4) + 8)',
+      expected: '(8 + 8)'
+    },
+
   ];
 
   for (const test of tests) {

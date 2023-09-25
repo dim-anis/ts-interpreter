@@ -444,6 +444,30 @@ export function modify(node: Node, modifier: ModifierFunc): Node {
       if (right) {
         exp.right = modify(right, modifier) as Expression;
       }
+      break;
+    }
+    case (node instanceof IndexExpression): {
+      const exp = node as IndexExpression;
+      exp.left = modify(exp.left, modifier) as Expression;
+      exp.index = modify(exp.left, modifier) as Expression;
+      break;
+    }
+    case (node instanceof IfExpression): {
+      const ifExp = node as IfExpression;
+      const condition = ifExp.condition;
+      if (condition) {
+        ifExp.condition = modify(condition, modifier) as Expression;
+      }
+      ifExp.consequence = modify(ifExp.consequence, modifier) as BlockStatement;
+
+      if (ifExp.alternative) {
+        ifExp.alternative = modify(ifExp.alternative, modifier) as BlockStatement;
+      }
+      break;
+    }
+    case (node instanceof BlockStatement): {
+      const blockStmt = node as BlockStatement;
+      blockStmt.statements.forEach(stmt => modify(stmt, modifier));
     }
   }
 

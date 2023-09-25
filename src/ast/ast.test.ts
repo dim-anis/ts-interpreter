@@ -1,5 +1,5 @@
 import { TokenType, createNewToken } from "../token/token";
-import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, modify } from "./ast";
+import { BlockStatement, Expression, ExpressionStatement, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, modify } from "./ast";
 
 test('test string', () => {
   const myVar = new Identifier(
@@ -83,12 +83,33 @@ describe('test modify', () => {
   const prefix2 = new PrefixExpression({ type: TokenType.MINUS, literal: '-' });
   prefix2.right = two();
 
+  const idx1 = new IndexExpression({type: TokenType.LBRACKET, literal: '['}, one());
+  idx1.index = one();
+  const idx2 = new IndexExpression({type: TokenType.LBRACKET, literal: '['}, two());
+  idx2.index = two();
+
+  const ifExp1 = new IfExpression({type: TokenType.IF, literal: 'if'});
+  ifExp1.condition = one();
+  const blockStmt1 = new BlockStatement({type: TokenType.LBRACE, literal: '{'});
+  blockStmt1.statements = [stmt_1];
+  ifExp1.consequence = blockStmt1;
+  ifExp1.alternative = blockStmt1;
+
+  const ifExp2 = new IfExpression({type: TokenType.IF, literal: 'if'});
+  ifExp2.condition = two();
+  const blockStmt2 = new BlockStatement({type: TokenType.LBRACE, literal: '{'});
+  blockStmt2.statements = [stmt_2];
+  ifExp2.consequence = blockStmt2;
+  ifExp2.alternative = blockStmt2;
+
   const tests: [Node, Node][] = [
     [one(), two()],
     [p1, p2],
     [infix1, infix3],
     [infix2, infix3],
-    [prefix1, prefix2]
+    [prefix1, prefix2],
+    [idx1, idx2],
+    [ifExp1, ifExp2]
   ]
 
   test.each(tests)('modifying %p should result in %p', (input, expected) => {

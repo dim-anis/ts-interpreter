@@ -468,7 +468,40 @@ export function modify(node: Node, modifier: ModifierFunc): Node {
     case (node instanceof BlockStatement): {
       const blockStmt = node as BlockStatement;
       blockStmt.statements.forEach(stmt => modify(stmt, modifier));
+      break;
     }
+    case (node instanceof ReturnStatement): {
+      const returnStmt = node as ReturnStatement;
+      returnStmt.returnValue = modify(returnStmt.returnValue, modifier) as Expression;
+      break;
+    }
+    case (node instanceof LetStatement): {
+      const letStmt = node as LetStatement;
+      letStmt.value = modify(letStmt.value, modifier) as Expression;
+      break;
+    }
+    case (node instanceof FunctionLiteral): {
+      const fnLiteral = node as FunctionLiteral;
+      fnLiteral.parameters?.forEach(param => modify(param, modifier));
+      fnLiteral.body = modify(fnLiteral.body, modifier) as BlockStatement;
+      break;
+    }
+    case (node instanceof ArrayLiteral): {
+      const arrLiteral = node as ArrayLiteral;
+      arrLiteral.elements.forEach(el => modify(el, modifier));
+      break;
+    }
+    case (node instanceof HashLiteral): {
+      const hashLiteral = node as HashLiteral;
+      const newPairs = new Map<Expression, Expression>();
+      hashLiteral.pairs.forEach((val, key) => {
+        newPairs.set(modify(key, modifier) as Expression, modify(val, modifier) as Expression);
+      })
+
+      hashLiteral.pairs = newPairs;
+      break;
+    }
+
   }
 
   return modifier(node);

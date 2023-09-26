@@ -38,6 +38,8 @@ export const TokenType = {
 
   EQ: "==",
   NOT_EQ: "!=",
+
+  MACRO: "MACRO"
 } as const;
 
 export type TokenItem = typeof TokenType[keyof typeof TokenType];
@@ -50,6 +52,7 @@ export const KEYWORDS = {
   'if': createNewToken(TokenType.IF, 'if'),
   'else': createNewToken(TokenType.ELSE, 'else'),
   'return': createNewToken(TokenType.RETURN, 'return'),
+  'macro': createNewToken(TokenType.MACRO, 'macro')
 } as const;
 
 export type Token = {

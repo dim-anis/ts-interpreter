@@ -220,6 +220,33 @@ export class FunctionLiteral implements Expression {
   }
 }
 
+export class MacroLiteral implements Expression {
+  token: Token;
+  parameters!: Identifier[] | null;
+  body!: BlockStatement;
+
+  constructor(token: Token) {
+    this.token = token;
+  }
+
+  expressionNode(): string {
+    return 'expressionNode';
+  }
+  tokenLiteral(): string {
+    return this.token.literal;
+  }
+  string(): string {
+    const params: string[] = [];
+    if (this.parameters) {
+      for (const param of this.parameters) {
+        params.push(param.string());
+      }
+    }
+
+    return `${this.tokenLiteral()}(${params.join(', ')})${this.body.string()}`;
+  }
+}
+
 export class ArrayLiteral {
   token: Token;
   elements!: Expression[];

@@ -14,6 +14,7 @@ import {
   InfixExpression,
   IntegerLiteral,
   LetStatement,
+  MacroLiteral,
   PrefixExpression,
   ReturnStatement,
   Statement,
@@ -565,6 +566,48 @@ test('test function literal parsing', () => {
       expect(fn.body.statements.length).toBe(1);
 
       const bodyStmt = fn.body.statements[0];
+
+      expect(bodyStmt).toBeInstanceOf(ExpressionStatement);
+
+      if (bodyStmt instanceof ExpressionStatement) {
+        if (bodyStmt.expression) {
+          testInfixExpression(bodyStmt.expression, 'x', '+', 'y');
+        }
+      }
+    }
+  }
+});
+
+test('test macro literal parsing', () => {
+  const input = `macro(x, y) { x + y; }`;
+
+  const l = new Lexer(input);
+  const p = new Parser(l);
+  const program = p.parseProgram();
+  checkParserErrors(p);
+
+  expect(program.statements.length).toBe(1);
+
+  const stmt = program.statements[0];
+
+  expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+  if (stmt instanceof ExpressionStatement) {
+    const ml = stmt.expression;
+
+    expect(ml).toBeInstanceOf(MacroLiteral);
+
+    if (ml instanceof MacroLiteral) {
+      expect(ml.parameters?.length).toBe(2);
+
+      if (!ml.parameters) return;
+
+      testLiteralExpression(ml.parameters[0], 'x');
+      testLiteralExpression(ml.parameters[1], 'y');
+
+      expect(ml.body.statements.length).toBe(1);
+
+      const bodyStmt = ml.body.statements[0];
 
       expect(bodyStmt).toBeInstanceOf(ExpressionStatement);
 

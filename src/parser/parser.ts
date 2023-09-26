@@ -15,6 +15,7 @@ import {
   InfixExpression,
   IntegerLiteral,
   LetStatement,
+  MacroLiteral,
   PrefixExpression,
   Program,
   ReturnStatement,
@@ -75,6 +76,10 @@ export class Parser {
     this.registerPrefix(
       TokenType.FUNCTION,
       this.parseFunctionLiteral.bind(this),
+    );
+    this.registerPrefix(
+      TokenType.MACRO,
+      this.parseMacroLiteral.bind(this),
     );
     this.registerPrefix(TokenType.STRING, this.parseStringLiteral.bind(this));
     this.registerPrefix(TokenType.LBRACKET, this.parseArrayLiteral.bind(this));
@@ -298,6 +303,24 @@ export class Parser {
     return literal;
   }
 
+  parseMacroLiteral(): Expression | null {
+    const literal = new MacroLiteral(this._curToken);
+
+    if (!this.expectPeek(TokenType.LPAREN)) {
+      return null;
+    }
+
+    literal.parameters = this.parseFunctionParameters();
+
+    if (!this.expectPeek(TokenType.LBRACE)) {
+      return null;
+    }
+
+    literal.body = this.parseBlockStatement();
+
+    return literal;
+  }
+
   parseArrayLiteral(): Expression {
     const array = new ArrayLiteral(this._curToken);
     const elements = this.parseExpressionList(TokenType.RBRACKET);
@@ -322,7 +345,7 @@ export class Parser {
 
       this.nextToken();
       const value = this.parseExpression(Precedence.LOWEST);
-      
+
       if (key && value) {
         hash.pairs.set(key, value);
       }

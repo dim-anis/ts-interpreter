@@ -1,5 +1,5 @@
 import { Lexer } from "../lexer/lexer";
-import { Boolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray, MonkeyHash, Quote } from "../object/object";
+import { MonkeyBoolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray, MonkeyHash, Quote } from "../object/object";
 import { Parser } from "../parser/parser";
 import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
 
@@ -663,7 +663,24 @@ test('test quote unquote', () => {
       input: 'quote(unquote(4 + 4) + 8)',
       expected: '(8 + 8)'
     },
-
+    {
+      input: 'quote(unquote(true))',
+      expected: 'true'
+    },
+    {
+      input: 'quote(unquote(true == false))',
+      expected: 'false'
+    },
+    {
+      input: 'quote(unquote(quote(4 + 4)))',
+      expected: '(4 + 4)'
+    },
+    {
+      input: `let quotedInfixExpression = quote(4 + 4);
+quote(unquote(4 + 4) + unquote(quotedInfixExpression))
+`,
+      expected: '(8 + (4 + 4))'
+    },
   ];
 
   for (const test of tests) {
@@ -707,9 +724,9 @@ function testIntegerObject(obj: MonkeyObject, expected: number) {
 }
 
 function testBooleanObject(obj: MonkeyObject, expected: boolean) {
-  expect(obj).toBeInstanceOf(Boolean);
+  expect(obj).toBeInstanceOf(MonkeyBoolean);
 
-  if (obj instanceof Boolean) {
+  if (obj instanceof MonkeyBoolean) {
     expect(obj.value).toBe(expected);
     return true;
   }

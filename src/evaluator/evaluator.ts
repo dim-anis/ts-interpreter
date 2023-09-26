@@ -1,11 +1,11 @@
 import { ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, StringLiteral, modify } from "../ast/ast";
-import { Boolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin, MonkeyArray, HashKey, HashPair, MonkeyHash, Hashable, Quote } from "../object/object";
-import { TokenType, createNewToken } from "../token/token";
+import { MonkeyBoolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin, MonkeyArray, HashKey, HashPair, MonkeyHash, Hashable, Quote } from "../object/object";
+import { Token, TokenType, createNewToken } from "../token/token";
 import builtins from "./builtins";
 
 export const NATIVE_TO_OBJ = {
-  TRUE: new Boolean(true),
-  FALSE: new Boolean(false),
+  TRUE: new MonkeyBoolean(true),
+  FALSE: new MonkeyBoolean(false),
   NULL: new MonkeyNull(),
 }
 
@@ -468,6 +468,19 @@ function convertObjectToASTNode(obj: MonkeyObject): Node {
       const intLiteral = new IntegerLiteral(t);
       intLiteral.value = (obj as Integer).value;
       return intLiteral;
+    }
+    case 'BOOLEAN': {
+      let t: Token;
+      if ((obj as MonkeyBoolean).value) {
+        t = createNewToken(TokenType.TRUE, 'true');
+      } else {
+        t = createNewToken(TokenType.FALSE, 'false');
+      }
+      const bool = new BooleanLiteral(t, (obj as MonkeyBoolean).value);
+      return bool;
+    }
+    case 'QUOTE': {
+      return (obj as Quote).node;
     }
     default:
       return new IntegerLiteral({ type: TokenType.INT, literal: '0' });

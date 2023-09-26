@@ -114,7 +114,7 @@ export class MonkeyString implements MonkeyObject {
   }
 }
 
-export class Boolean implements MonkeyObject {
+export class MonkeyBoolean implements MonkeyObject {
   value!: boolean;
 
   constructor(value: boolean) {

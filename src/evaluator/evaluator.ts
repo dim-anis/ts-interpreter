@@ -1,5 +1,5 @@
 import { ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, StringLiteral, modify } from "../ast/ast";
-import { MonkeyBoolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin, MonkeyArray, HashKey, HashPair, MonkeyHash, Hashable, Quote } from "../object/object";
+import { MonkeyBoolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin, MonkeyArray, HashPair, MonkeyHash, Hashable, Quote } from "../object/object";
 import { Token, TokenType, createNewToken } from "../token/token";
 import builtins from "./builtins";
 

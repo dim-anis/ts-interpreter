@@ -1,6 +1,6 @@
-import { LetStatement, MacroLiteral, Program, Statement } from "../ast/ast";
+import { CallExpression, Identifier, LetStatement, MacroLiteral, Node, Program, Statement, modify } from "../ast/ast";
 import { Lexer } from "../lexer/lexer";
-import { MonkeyBoolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray, MonkeyHash, Quote, Environment, Macro } from "../object/object";
+import { MonkeyBoolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray, MonkeyHash, Quote, Environment, Macro, newEnclosedEnvironment } from "../object/object";
 import { Parser } from "../parser/parser";
 import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
 
@@ -730,6 +730,39 @@ let mymacro = macro(x, y) { x + y};
   expect(macro.body.string()).toBe(expectedBody);
 })
 
+describe('test expand macros', () => {
+  const tests: [string, string][] = [
+    [
+      `
+let infixExpression = macro() { quote(1 + 2); }
+
+infixExpression();
+`,
+      '(1 + 2)'
+    ],
+    [
+      `
+let reverse = macro(a, b) { quote(unquote(b) - unquote(a)); }
+
+reverse(2 + 2, 10 - 5);
+`,
+      '(10 - 5) - (2 + 2)'
+    ],
+  ]
+
+  test.each(tests)('modifying %p should result in %p', (input, exp) => {
+    const expected = testParseProgram(exp);
+    const program = testParseProgram(input);
+
+    const envStore = new Map<string, MonkeyObject>();
+    const env = new Environment(envStore);
+    defineMacros(program, env);
+    const expanded = expandMacros(program, env);
+
+    expect(expanded.string()).toBe(expected.string());
+  })
+})
+
 function testParseProgram(input: string): Program {
   const l = new Lexer(input);
   const p = new Parser(l);
@@ -753,10 +786,92 @@ function defineMacros(program: Program, env: Environment): void {
     }
   })
 
-  for (let i = definitions.length; i >= 0; i--) {
+  for (let i = definitions.length - 1; i >= 0; i--) {
     const definitionIdx = definitions[i];
     program.statements.splice(definitionIdx, 1);
   }
+}
+
+function expandMacros(program: Node, env: Environment): Node {
+  return modify(program, (node: Node): Node => {
+    if (!(node instanceof CallExpression)) {
+      return node;
+    }
+
+    const callExp = node as CallExpression;
+    const { macro, isMacro } = isMacroCall(callExp, env);
+    if (!isMacro || !macro) {
+      return node;
+    }
+
+    const args = quoteArgs(callExp);
+    const evalEnv = extendMacroEnv(macro, args);
+    const evaluated = monkeyEval(macro.body, evalEnv);
+
+    if (!(evaluated instanceof Quote)) {
+      throw new Err('we only support returning AST-nodes from macros');
+    }
+
+    const quote = evaluated as Quote;
+
+    return quote.node;
+  })
+}
+
+function isMacroCall(exp: CallExpression, env: Environment): {
+  macro: Macro | null,
+  isMacro: boolean
+} {
+  if (!(exp.fn instanceof Identifier)) {
+    return {
+      macro: null,
+      isMacro: false
+    };
+  }
+
+  const identifier = exp.fn as Identifier;
+
+  const obj = env.get(identifier.value);
+  if (!obj) {
+    return {
+      macro: null,
+      isMacro: false
+    }
+  }
+
+  if (!(obj instanceof Macro)) {
+    return {
+      macro: null,
+      isMacro: false
+    };
+  }
+
+  const macro = obj as Macro;
+
+  return {
+    macro,
+    isMacro: true
+  }
+}
+
+function quoteArgs(exp: CallExpression): Quote[] {
+  const args: Quote[] = [];
+
+  exp.arguments.forEach((arg) => {
+    args.push(new Quote(arg));
+  });
+
+  return args;
+}
+
+function extendMacroEnv(macro: Macro, args: Quote[]): Environment {
+  const extended = newEnclosedEnvironment(macro.env);
+
+  macro.parameters.forEach((param, paramIdx) => {
+    extended.set(param.value, args[paramIdx]);
+  })
+
+  return extended;
 }
 
 function isMacroDefinition(node: Statement): boolean {

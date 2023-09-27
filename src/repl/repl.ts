@@ -4,19 +4,7 @@ import { stdin as input, stdout as output } from 'node:process';
 import { Parser } from '../parser/parser';
 import { monkeyEval } from '../evaluator/evaluator';
 import { newEnvironment } from '../object/object';
-
-function printParseErrors(errors: string[]) {
-  const out: string[] = [
-    'Woops, we ran into some problems!',
-    'parser errors:',
-  ];
-
-  for (const err of errors) {
-    out.push(`\t${err}\n`);
-  }
-
-  console.error(out.join('\n'));
-}
+import { defineMacros, expandMacros } from '../evaluator/evaluator';
 
 async function main() {
   const rl = readline.createInterface({
@@ -33,6 +21,7 @@ but be careful not to launch your machine into an infinite loop as this is a WIP
   rl.prompt();
 
   const env = newEnvironment();
+  const macroEnv = newEnvironment();
 
   rl.on('line', async (input) => {
     const l = new Lexer(input);
@@ -43,8 +32,11 @@ but be careful not to launch your machine into an infinite loop as this is a WIP
       printParseErrors(p.errors());
     }
 
-    const evaluated = monkeyEval(program, env);
-    if (evaluated !== null) {
+    defineMacros(program, macroEnv);
+    const expanded = expandMacros(program, macroEnv);
+    const evaluated = monkeyEval(expanded, env);
+
+    if (Object.keys(evaluated).length > 0) {
       console.log(`${evaluated.inspect()}\n`);
     }
 
@@ -54,6 +46,19 @@ but be careful not to launch your machine into an infinite loop as this is a WIP
   rl.on('close', () => {
     console.log('Session ended');
   });
+}
+
+function printParseErrors(errors: string[]) {
+  const out: string[] = [
+    'Woops, we ran into some problems!',
+    'parser errors:',
+  ];
+
+  for (const err of errors) {
+    out.push(`\t${err}\n`);
+  }
+
+  console.error(out.join('\n'));
 }
 
 main();

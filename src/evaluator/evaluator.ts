@@ -1,5 +1,5 @@
-import { ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, StringLiteral, modify } from "../ast/ast";
-import { MonkeyBoolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin, MonkeyArray, HashPair, MonkeyHash, Hashable, Quote } from "../object/object";
+import { ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, MacroLiteral, Node, PrefixExpression, Program, ReturnStatement, Statement, StringLiteral, modify } from "../ast/ast";
+import { MonkeyBoolean, Environment, Err, MonkeyFunction, Integer, MonkeyObject, MonkeyNull, OBJECT_TYPE, ReturnValue, newEnclosedEnvironment, MonkeyString, Builtin, MonkeyArray, HashPair, MonkeyHash, Hashable, Quote, Macro } from "../object/object";
 
 import { Token, TokenType, createNewToken } from "../token/token";
 import builtins from "./builtins";
@@ -486,4 +486,127 @@ function convertObjectToASTNode(obj: MonkeyObject): Node {
     default:
       return new IntegerLiteral({ type: TokenType.INT, literal: '0' });
   }
+}
+
+export function defineMacros(program: Program, env: Environment): void {
+  const definitions: number[] = [];
+
+  program.statements.forEach((stmt, idx) => {
+    if (isMacroDefinition(stmt)) {
+      addMacro(stmt, env);
+      definitions.push(idx);
+    }
+  })
+
+  for (let i = definitions.length - 1; i >= 0; i--) {
+    const definitionIdx = definitions[i];
+    program.statements.splice(definitionIdx, 1);
+  }
+}
+
+export function expandMacros(program: Node, env: Environment): Node {
+  return modify(program, (node: Node): Node => {
+    if (!(node instanceof CallExpression)) {
+      return node;
+    }
+
+    const callExp = node as CallExpression;
+    const { macro, isMacro } = isMacroCall(callExp, env);
+    if (!isMacro || !macro) {
+      return node;
+    }
+
+    const args = quoteArgs(callExp);
+    const evalEnv = extendMacroEnv(macro, args);
+    const evaluated = monkeyEval(macro.body, evalEnv);
+
+    if (!(evaluated instanceof Quote)) {
+      throw new Err('we only support returning AST-nodes from macros');
+    }
+
+    const quote = evaluated as Quote;
+
+    return quote.node;
+  })
+}
+
+function isMacroCall(exp: CallExpression, env: Environment): {
+  macro: Macro | null,
+  isMacro: boolean
+} {
+  if (!(exp.fn instanceof Identifier)) {
+    return {
+      macro: null,
+      isMacro: false
+    };
+  }
+
+  const identifier = exp.fn as Identifier;
+
+  const obj = env.get(identifier.value);
+  if (!obj) {
+    return {
+      macro: null,
+      isMacro: false
+    }
+  }
+
+  if (!(obj instanceof Macro)) {
+    return {
+      macro: null,
+      isMacro: false
+    };
+  }
+
+  const macro = obj as Macro;
+
+  return {
+    macro,
+    isMacro: true
+  }
+}
+
+function quoteArgs(exp: CallExpression): Quote[] {
+  const args: Quote[] = [];
+
+  exp.arguments.forEach((arg) => {
+    args.push(new Quote(arg));
+  });
+
+  return args;
+}
+
+function extendMacroEnv(macro: Macro, args: Quote[]): Environment {
+  const extended = newEnclosedEnvironment(macro.env);
+
+  macro.parameters.forEach((param, paramIdx) => {
+    extended.set(param.value, args[paramIdx]);
+  })
+
+  return extended;
+}
+
+function isMacroDefinition(node: Statement): boolean {
+  if (!(node instanceof LetStatement)) {
+    return false;
+  }
+  const letStmt = node;
+
+  if (!(letStmt.value instanceof MacroLiteral)) {
+    return false;
+  }
+
+  return true;
+}
+
+function addMacro(stmt: Statement, env: Environment): void {
+  const letStmt = stmt as LetStatement;
+  const macroLiteral = letStmt.value as MacroLiteral;
+
+  const macro = new Macro();
+  macro.parameters = macroLiteral.parameters || [];
+  macro.env = env;
+  macro.body = macroLiteral.body;
+
+  env.set(letStmt.name.value, macro);
 }

@@ -87,7 +87,7 @@ export class IfExpression implements Expression {
 export class CallExpression implements Expression {
   token: Token;
   fn!: Expression;
-  arguments!: Expression[];
+  arguments: Expression[] = [];
 
   constructor(token: Token, fn: Expression) {
     this.token = token;
@@ -105,9 +105,9 @@ export class CallExpression implements Expression {
   string(): string {
     const out: string[] = [];
 
-    for (const arg of this.arguments) {
+    this.arguments.forEach(arg => {
       out.push(arg.string());
-    }
+    })
 
     return `${this.fn.string()}(${out.join(', ')})`;
   }

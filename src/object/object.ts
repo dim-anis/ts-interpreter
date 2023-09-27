@@ -27,7 +27,8 @@ export const OBJECT_TYPE = {
   BUILTIN_OBJ: "BUILTIN",
   ERROR_OBJ: "ERROR",
   NULL_OBJ: "NULL",
-  QUOTE_OBJ: "QUOTE"
+  QUOTE_OBJ: "QUOTE",
+  MACRO_OBJ: "MACRO"
 } as const;
 
 export type MonkeyObjectType = typeof OBJECT_TYPE[keyof typeof OBJECT_TYPE];
@@ -255,6 +256,22 @@ export class Quote implements MonkeyObject {
 
   inspect(): string {
     return `QUOTE(${this.node.string()})`;
+  }
+}
+
+export class Macro implements MonkeyObject {
+  parameters!: Identifier[];
+  body!: BlockStatement;
+  env!: Environment;
+
+  type(): MonkeyObjectType {
+    return OBJECT_TYPE.MACRO_OBJ;
+  }
+  inspect(): string {
+    const params: string[] = [];
+    this.parameters.forEach(param => params.push(param.string()));
+
+    return `macro(${params.join(', ')}) {\n${this.body.string()}\n}`
   }
 }
 

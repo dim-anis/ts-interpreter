@@ -1,5 +1,6 @@
+import { LetStatement, MacroLiteral, Program, Statement } from "../ast/ast";
 import { Lexer } from "../lexer/lexer";
-import { MonkeyBoolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray, MonkeyHash, Quote } from "../object/object";
+import { MonkeyBoolean, Err, MonkeyFunction, Integer, MonkeyObject, newEnvironment, MonkeyString, MonkeyArray, MonkeyHash, Quote, Environment, Macro } from "../object/object";
 import { Parser } from "../parser/parser";
 import { NATIVE_TO_OBJ, monkeyEval } from "./evaluator";
 
@@ -697,10 +698,90 @@ quote(unquote(4 + 4) + unquote(quotedInfixExpression))
   }
 })
 
+test('test define macros', () => {
+  const input = `
+let number = 1;
+let function = fn(x, y) { x + y};
+let mymacro = macro(x, y) { x + y};
+`
+
+  const envStore = new Map<string, MonkeyObject>();
+  const env = new Environment(envStore);
+  const program = testParseProgram(input);
+
+  defineMacros(program, env);
+
+  expect(program.statements.length).toBe(2);
+
+  expect(env.get('number')).toBe(undefined);
+  expect(env.get('function')).toBe(undefined);
+  const obj = env.get('mymacro');
+  expect(obj).not.toBe(undefined);
+
+  expect(obj).toBeInstanceOf(Macro);
+  const macro = obj as Macro;
+
+  expect(macro.parameters.length).toBe(2);
+  expect(macro.parameters[0].string()).toBe('x');
+  expect(macro.parameters[1].string()).toBe('y');
+
+  const expectedBody = '(x + y)'
+
+  expect(macro.body.string()).toBe(expectedBody);
+})
+
+function testParseProgram(input: string): Program {
+  const l = new Lexer(input);
+  const p = new Parser(l);
+
+  return p.parseProgram();
+}
+
 function testNullObject(obj: MonkeyObject): boolean {
   expect(obj).toBe(NATIVE_TO_OBJ.NULL);
 
   return true;
+}
+
+function defineMacros(program: Program, env: Environment): void {
+  const definitions: number[] = [];
+
+  program.statements.forEach((stmt, idx) => {
+    if (isMacroDefinition(stmt)) {
+      addMacro(stmt, env);
+      definitions.push(idx);
+    }
+  })
+
+  for (let i = definitions.length; i >= 0; i--) {
+    const definitionIdx = definitions[i];
+    program.statements.splice(definitionIdx, 1);
+  }
+}
+
+function isMacroDefinition(node: Statement): boolean {
+  if (!(node instanceof LetStatement)) {
+    return false;
+  }
+  const letStmt = node;
+
+  if (!(letStmt.value instanceof MacroLiteral)) {
+    return false;
+  }
+
+  return true;
+}
+
+function addMacro(stmt: Statement, env: Environment): void {
+  const letStmt = stmt as LetStatement;
+  const macroLiteral = letStmt.value as MacroLiteral;
+
+  const macro = new Macro();
+  macro.parameters = macroLiteral.parameters || [];
+  macro.env = env;
+  macro.body = macroLiteral.body;
+
+  env.set(letStmt.name.value, macro);
 }
 
 function testEval(input: string): MonkeyObject {

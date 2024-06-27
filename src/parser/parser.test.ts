@@ -27,22 +27,22 @@ test('test let statements', () => {
     expectedIdentifier: string;
     expectedValue: any;
   }[] = [
-      {
-        input: 'let x = 5;',
-        expectedIdentifier: 'x',
-        expectedValue: 5,
-      },
-      {
-        input: 'let y = true;',
-        expectedIdentifier: 'y',
-        expectedValue: true,
-      },
-      {
-        input: 'let foobar = y;',
-        expectedIdentifier: 'foobar',
-        expectedValue: 'y',
-      },
-    ];
+    {
+      input: 'let x = 5;',
+      expectedIdentifier: 'x',
+      expectedValue: 5,
+    },
+    {
+      input: 'let y = true;',
+      expectedIdentifier: 'y',
+      expectedValue: true,
+    },
+    {
+      input: 'let foobar = y;',
+      expectedIdentifier: 'foobar',
+      expectedValue: 'y',
+    },
+  ];
 
   for (const test of tests) {
     const l = new Lexer(test.input);
@@ -76,27 +76,27 @@ test('test return statement', () => {
     input: string;
     expectedValue: any;
   }[] = [
-      {
-        input: 'return 5;',
-        expectedValue: 5,
-      },
-      {
-        input: 'return 10;',
-        expectedValue: 10,
-      },
-      {
-        input: 'return 993322;',
-        expectedValue: 993322,
-      },
-      {
-        input: 'return true;',
-        expectedValue: true,
-      },
-      {
-        input: 'return x;',
-        expectedValue: 'x',
-      },
-    ];
+    {
+      input: 'return 5;',
+      expectedValue: 5,
+    },
+    {
+      input: 'return 10;',
+      expectedValue: 10,
+    },
+    {
+      input: 'return 993322;',
+      expectedValue: 993322,
+    },
+    {
+      input: 'return true;',
+      expectedValue: true,
+    },
+    {
+      input: 'return x;',
+      expectedValue: 'x',
+    },
+  ];
 
   for (const test of tests) {
     const l = new Lexer(test.input);
@@ -199,27 +199,27 @@ test('test parsing prefix expressions', () => {
     operator: string;
     value: any;
   }[] = [
-      {
-        input: '!5;',
-        operator: '!',
-        value: 5,
-      },
-      {
-        input: '-15;',
-        operator: '-',
-        value: 15,
-      },
-      {
-        input: '!true;',
-        operator: '!',
-        value: true,
-      },
-      {
-        input: '!false',
-        operator: '!',
-        value: false,
-      },
-    ];
+    {
+      input: '!5;',
+      operator: '!',
+      value: 5,
+    },
+    {
+      input: '-15;',
+      operator: '-',
+      value: 15,
+    },
+    {
+      input: '!true;',
+      operator: '!',
+      value: true,
+    },
+    {
+      input: '!false',
+      operator: '!',
+      value: false,
+    },
+  ];
 
   for (const test of prefixTests) {
     const l = new Lexer(test.input);
@@ -258,73 +258,73 @@ test('test parsing infix expressions', () => {
     operator: string;
     rightValue: any;
   }[] = [
-      {
-        input: '5 + 5;',
-        leftValue: 5,
-        operator: '+',
-        rightValue: 5,
-      },
-      {
-        input: '5 - 5;',
-        leftValue: 5,
-        operator: '-',
-        rightValue: 5,
-      },
-      {
-        input: '5 * 5;',
-        leftValue: 5,
-        operator: '*',
-        rightValue: 5,
-      },
-      {
-        input: '5 / 5;',
-        leftValue: 5,
-        operator: '/',
-        rightValue: 5,
-      },
-      {
-        input: '5 > 5;',
-        leftValue: 5,
-        operator: '>',
-        rightValue: 5,
-      },
-      {
-        input: '5 < 5;',
-        leftValue: 5,
-        operator: '<',
-        rightValue: 5,
-      },
-      {
-        input: '5 == 5;',
-        leftValue: 5,
-        operator: '==',
-        rightValue: 5,
-      },
-      {
-        input: '5 != 5;',
-        leftValue: 5,
-        operator: '!=',
-        rightValue: 5,
-      },
-      {
-        input: 'true == true',
-        leftValue: true,
-        operator: '==',
-        rightValue: true,
-      },
-      {
-        input: 'true != false',
-        leftValue: true,
-        operator: '!=',
-        rightValue: false,
-      },
-      {
-        input: 'false == false',
-        leftValue: false,
-        operator: '==',
-        rightValue: false,
-      },
-    ];
+    {
+      input: '5 + 5;',
+      leftValue: 5,
+      operator: '+',
+      rightValue: 5,
+    },
+    {
+      input: '5 - 5;',
+      leftValue: 5,
+      operator: '-',
+      rightValue: 5,
+    },
+    {
+      input: '5 * 5;',
+      leftValue: 5,
+      operator: '*',
+      rightValue: 5,
+    },
+    {
+      input: '5 / 5;',
+      leftValue: 5,
+      operator: '/',
+      rightValue: 5,
+    },
+    {
+      input: '5 > 5;',
+      leftValue: 5,
+      operator: '>',
+      rightValue: 5,
+    },
+    {
+      input: '5 < 5;',
+      leftValue: 5,
+      operator: '<',
+      rightValue: 5,
+    },
+    {
+      input: '5 == 5;',
+      leftValue: 5,
+      operator: '==',
+      rightValue: 5,
+    },
+    {
+      input: '5 != 5;',
+      leftValue: 5,
+      operator: '!=',
+      rightValue: 5,
+    },
+    {
+      input: 'true == true',
+      leftValue: true,
+      operator: '==',
+      rightValue: true,
+    },
+    {
+      input: 'true != false',
+      leftValue: true,
+      operator: '!=',
+      rightValue: false,
+    },
+    {
+      input: 'false == false',
+      leftValue: false,
+      operator: '==',
+      rightValue: false,
+    },
+  ];
 
   for (const test of infixTests) {
     const l = new Lexer(test.input);
@@ -345,7 +345,14 @@ test('test parsing infix expressions', () => {
       if (exp === null) return;
 
       if (exp instanceof InfixExpression) {
-        expect(testInfixExpression(exp, test.leftValue, test.operator, test.rightValue)).toBe(true);
+        expect(
+          testInfixExpression(
+            exp,
+            test.leftValue,
+            test.operator,
+            test.rightValue,
+          ),
+        ).toBe(true);
       }
     }
   }
@@ -356,75 +363,75 @@ test('test operator precedence parsing', () => {
     input: string;
     expected: string;
   }[] = [
-      {
-        input: '-a * b',
-        expected: '((-a) * b)',
-      },
-      {
-        input: '!-a',
-        expected: '(!(-a))',
-      },
-      {
-        input: '5 < 4 != 3 > 4',
-        expected: '((5 < 4) != (3 > 4))',
-      },
-      {
-        input: 'true',
-        expected: 'true',
-      },
-      {
-        input: 'false',
-        expected: 'false',
-      },
-      {
-        input: '3 > 5 == false',
-        expected: '((3 > 5) == false)',
-      },
-      {
-        input: '3 < 5 == true',
-        expected: '((3 < 5) == true)',
-      },
-      {
-        input: '1 + (2 + 3) + 4',
-        expected: '((1 + (2 + 3)) + 4)',
-      },
-      {
-        input: '(5 + 5) * 2',
-        expected: '((5 + 5) * 2)',
-      },
-      {
-        input: '2 / (5 + 5)',
-        expected: '(2 / (5 + 5))',
-      },
-      {
-        input: '-(5 + 5)',
-        expected: '(-(5 + 5))',
-      },
-      {
-        input: '!(true == true)',
-        expected: '(!(true == true))',
-      },
-      {
-        input: 'a + add(b * c) + d',
-        expected: '((a + add((b * c))) + d)',
-      },
-      {
-        input: 'add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))',
-        expected: 'add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))',
-      },
-      {
-        input: 'add(a + b + c * d / f + g)',
-        expected: 'add((((a + b) + ((c * d) / f)) + g))',
-      },
-      {
-        input: 'a * [1, 2, 3, 4][b * c] * d',
-        expected: '((a * ([1, 2, 3, 4][(b * c)])) * d)'
-      },
-      {
-        input: 'add(a * b[2], b[1], 2 * [1, 2][1])',
-        expected: 'add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))'
-      },
-    ];
+    {
+      input: '-a * b',
+      expected: '((-a) * b)',
+    },
+    {
+      input: '!-a',
+      expected: '(!(-a))',
+    },
+    {
+      input: '5 < 4 != 3 > 4',
+      expected: '((5 < 4) != (3 > 4))',
+    },
+    {
+      input: 'true',
+      expected: 'true',
+    },
+    {
+      input: 'false',
+      expected: 'false',
+    },
+    {
+      input: '3 > 5 == false',
+      expected: '((3 > 5) == false)',
+    },
+    {
+      input: '3 < 5 == true',
+      expected: '((3 < 5) == true)',
+    },
+    {
+      input: '1 + (2 + 3) + 4',
+      expected: '((1 + (2 + 3)) + 4)',
+    },
+    {
+      input: '(5 + 5) * 2',
+      expected: '((5 + 5) * 2)',
+    },
+    {
+      input: '2 / (5 + 5)',
+      expected: '(2 / (5 + 5))',
+    },
+    {
+      input: '-(5 + 5)',
+      expected: '(-(5 + 5))',
+    },
+    {
+      input: '!(true == true)',
+      expected: '(!(true == true))',
+    },
+    {
+      input: 'a + add(b * c) + d',
+      expected: '((a + add((b * c))) + d)',
+    },
+    {
+      input: 'add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))',
+      expected: 'add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))',
+    },
+    {
+      input: 'add(a + b + c * d / f + g)',
+      expected: 'add((((a + b) + ((c * d) / f)) + g))',
+    },
+    {
+      input: 'a * [1, 2, 3, 4][b * c] * d',
+      expected: '((a * ([1, 2, 3, 4][(b * c)])) * d)',
+    },
+    {
+      input: 'add(a * b[2], b[1], 2 * [1, 2][1])',
+      expected: 'add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))',
+    },
+  ];
 
   for (const test of tests) {
     const l = new Lexer(test.input);
@@ -625,10 +632,10 @@ test('test function parameter parsing', () => {
     input: string;
     expectedParams: string[];
   }[] = [
-      { input: 'fn() {};', expectedParams: [] },
-      { input: 'fn(x) {};', expectedParams: ['x'] },
-      { input: 'fn(x, y, z) {};', expectedParams: ['x', 'y', 'z'] },
-    ];
+    { input: 'fn() {};', expectedParams: [] },
+    { input: 'fn(x) {};', expectedParams: ['x'] },
+    { input: 'fn(x, y, z) {};', expectedParams: ['x', 'y', 'z'] },
+  ];
 
   for (const test of tests) {
     const l = new Lexer(test.input);
@@ -691,7 +698,7 @@ test('test call expression parsing', () => {
 // });
 
 test('test string literal expression', () => {
-  const input = '"hello world";';
+  const input = '"hello,world";';
 
   const l = new Lexer(input);
   const p = new Parser(l);
@@ -780,9 +787,9 @@ test('test parsing hash literals string keys', () => {
       expect(hash.pairs.size).toBe(3);
 
       const expected = new Map<string, number>([
-        ["one", 1],
-        ["two", 2],
-        ["three", 3],
+        ['one', 1],
+        ['two', 2],
+        ['three', 3],
       ]);
 
       hash.pairs.forEach((key, value) => {
@@ -790,7 +797,7 @@ test('test parsing hash literals string keys', () => {
         if (expectedValue) {
           testIntegerLiteral(value, expectedValue);
         }
-      })
+      });
     }
   }
 });
@@ -840,20 +847,20 @@ test('test parsing hash literals with expressions', () => {
           'one',
           (e: Expression) => {
             testInfixExpression(e, 0, '+', 1);
-          }
+          },
         ],
         [
           'two',
           (e: Expression) => {
             testInfixExpression(e, 10, '-', 8);
-          }
+          },
         ],
         [
           'three',
           (e: Expression) => {
             testInfixExpression(e, 15, '/', 5);
-          }
-        ]
+          },
+        ],
       ]);
 
       hash.pairs.forEach((key, value) => {
@@ -863,7 +870,7 @@ test('test parsing hash literals with expressions', () => {
         if (testFunc) {
           testFunc(value);
         }
-      })
+      });
     }
   }
 });
